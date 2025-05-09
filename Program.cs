@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace dotnetcore
+namespace Stats2fa
 {
     class Program
     {
