@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Stats2fa.api;
 using Stats2fa.api.models;
+using Stats2fa.cache;
 using Stats2fa.database;
 using Stats2fa.utils;
 
@@ -56,7 +58,22 @@ namespace Stats2fa {
                     break;
             }
 
+            //  On macOS, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) typically returns the user's home directory (/Users/username) rather than the Documents folder.
+            // This behavior is because .NET on macOS maps SpecialFolder.MyDocuments to the user's home directory, not a "Documents" subdirectory.
+            // This is a platform-specific implementation detail of .NET Core on macOS.
+            var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
+
+            // Delete existing database if it exists to ensure schema is up to date
+            if (File.Exists(dbPath))
+            {
+                Console.WriteLine($"Deleting existing database at {dbPath}");
+                File.Delete(dbPath);
+            }
+
             await using var db = new StatsContext(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
+
+            // Ensure database is created with current schema
+            await db.Database.EnsureCreatedAsync();
 
             if (reportDate > DateTime.UtcNow) {
                 Console.WriteLine($"Deferring Execution Requested Date {reportDate} is still {(reportDate - DateTime.UtcNow).TotalHours:0000.00} hours in the future.");
@@ -72,7 +89,7 @@ namespace Stats2fa {
                 ApiCallsVendors = 0,
                 ApiCallsClients = 0
             };
-            
+
             // Step 0 Setup HttpClient
             var slidingWindowRateLimiterOptions = new SlidingWindowRateLimiterOptions {
                 Window = TimeSpan.FromSeconds(1),
@@ -94,7 +111,19 @@ namespace Stats2fa {
             // Step 1 Fetch the Distributors
             Distributors distributors = await ApiUtils.GetDistributors(httpClient, apiInformation, null, Convert.ToInt32(config["ApiQueryLimits:DistributorLimit"]), Convert.ToInt32(config["ApiQueryLimits:DistributorMax"]));
             Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total distributors ({distributors.Count:00000})"));
-            // await Cache.SaveDistributors(db, distributors, reportDate);
+            await Cache.SaveDistributors(db, distributors, reportDate);
+
+            // Step 2 Fetch the Vendors 
+            ConcurrentBag<Vendor> allVendors = new ConcurrentBag<Vendor>();
+            await Task.WhenAll(Parallel.ForEachAsync(source: distributors.DistributorList, (distributor, cancellationToken) => ApiUtils.GetVendorsForDistributor(allVendors, httpClient, apiInformation, distributor, null, cancellationToken, Convert.ToInt32(config["ApiQueryLimits:VendorLimit"]), Convert.ToInt32(config["ApiQueryLimits:VendorMax"]))));
+            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total vendors ({allVendors.Count:00000})"));
+            await Cache.SaveVendors(db, allVendors, reportDate);
+                         
+            // Step 3 Fetch the Clients
+            ConcurrentBag<Client> allClients = new ConcurrentBag<Client>();
+            await Task.WhenAll(Parallel.ForEachAsync(source: allVendors, (vendor, cancellationToken) => ApiUtils.GetClientsForVendor(allClients, httpClient, apiInformation, vendor, null, cancellationToken, Convert.ToInt32(config["ApiQueryLimits:ClientLimit"]), Convert.ToInt32(config["ApiQueryLimits:ClientMax"]))));
+            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total clients ({allClients.Count:00000})"));
+            await Cache.SaveClients(db, allClients, reportDate);
 
             
             Console.WriteLine("Stats2fa");
