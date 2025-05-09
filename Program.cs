@@ -108,22 +108,57 @@ namespace Stats2fa {
             httpClient.Timeout = TimeSpan.FromSeconds(240); // fml vendor has 8004 clients
             httpClient.BaseAddress = new Uri(baseAddress);
 
-            // Step 1 Fetch the Distributors
-            Distributors distributors = await ApiUtils.GetDistributors(httpClient, apiInformation, null, Convert.ToInt32(config["ApiQueryLimits:DistributorLimit"]), Convert.ToInt32(config["ApiQueryLimits:DistributorMax"]));
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total distributors ({distributors.Count:00000})"));
-            await Cache.SaveDistributors(db, distributors, reportDate);
+            try {
+                // Step 1 Fetch the Distributors
+                Distributors distributors = await ApiUtils.GetDistributors(httpClient, apiInformation, null, Convert.ToInt32(config["ApiQueryLimits:DistributorLimit"]), Convert.ToInt32(config["ApiQueryLimits:DistributorMax"]));
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total distributors ({distributors.Count:00000})"));
+                await Cache.SaveDistributors(db, distributors, reportDate);
 
-            // Step 2 Fetch the Vendors 
-            ConcurrentBag<Vendor> allVendors = new ConcurrentBag<Vendor>();
-            await Task.WhenAll(Parallel.ForEachAsync(source: distributors.DistributorList, (distributor, cancellationToken) => ApiUtils.GetVendorsForDistributor(allVendors, httpClient, apiInformation, distributor, null, cancellationToken, Convert.ToInt32(config["ApiQueryLimits:VendorLimit"]), Convert.ToInt32(config["ApiQueryLimits:VendorMax"]))));
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total vendors ({allVendors.Count:00000})"));
-            await Cache.SaveVendors(db, allVendors, reportDate);
-                         
-            // Step 3 Fetch the Clients
-            ConcurrentBag<Client> allClients = new ConcurrentBag<Client>();
-            await Task.WhenAll(Parallel.ForEachAsync(source: allVendors, (vendor, cancellationToken) => ApiUtils.GetClientsForVendor(allClients, httpClient, apiInformation, vendor, null, cancellationToken, Convert.ToInt32(config["ApiQueryLimits:ClientLimit"]), Convert.ToInt32(config["ApiQueryLimits:ClientMax"]))));
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total clients ({allClients.Count:00000})"));
-            await Cache.SaveClients(db, allClients, reportDate);
+                if (distributors.DistributorList.Count == 0) {
+                    Console.WriteLine("No distributors found. Exiting.");
+                    return (int)ExitCode.Success;
+                }
+
+                // Step 2 Fetch the Vendors
+                ConcurrentBag<Vendor> allVendors = new ConcurrentBag<Vendor>();
+                try {
+                    await Task.WhenAll(Parallel.ForEachAsync(source: distributors.DistributorList, (distributor, cancellationToken) =>
+                        ApiUtils.GetVendorsForDistributor(allVendors, httpClient, apiInformation, distributor, null, cancellationToken,
+                            Convert.ToInt32(config["ApiQueryLimits:VendorLimit"]), Convert.ToInt32(config["ApiQueryLimits:VendorMax"]))));
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"Error during vendor fetching: {ex.Message}");
+                    // Continue with the vendors we were able to fetch
+                }
+
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total vendors ({allVendors.Count:00000})"));
+                await Cache.SaveVendors(db, allVendors, reportDate);
+
+                if (allVendors.Count == 0) {
+                    Console.WriteLine("No vendors found. Exiting.");
+                    return (int)ExitCode.Success;
+                }
+
+                // Step 3 Fetch the Clients
+                ConcurrentBag<Client> allClients = new ConcurrentBag<Client>();
+                try {
+                    await Task.WhenAll(Parallel.ForEachAsync(source: allVendors, (vendor, cancellationToken) =>
+                        ApiUtils.GetClientsForVendor(allClients, httpClient, apiInformation, vendor, null, cancellationToken,
+                            Convert.ToInt32(config["ApiQueryLimits:ClientLimit"]), Convert.ToInt32(config["ApiQueryLimits:ClientMax"]))));
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"Error during client fetching: {ex.Message}");
+                    // Continue with the clients we were able to fetch
+                }
+
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total clients ({allClients.Count:00000})"));
+                await Cache.SaveClients(db, allClients, reportDate);
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Unhandled exception: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                return (int)ExitCode.UnknownError;
+            }
 
             
             Console.WriteLine("Stats2fa");
