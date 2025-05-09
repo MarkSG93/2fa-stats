@@ -36,7 +36,7 @@ internal class Cache {
                     DistributorId = distributor.Id,
                     DistributorName = distributor.Name,
                     DistributorType = distributor.Type,
-                    distributorStatus = distributor.State
+                    DistributorStatus = distributor.State
                 };
             }
 

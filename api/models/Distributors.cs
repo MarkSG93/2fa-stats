@@ -12,9 +12,3 @@ public class Distributors {
 
     [JsonPropertyName("items")] public List<Distributor> DistributorList { get; set; }
 }
-
-public class Owner {
-    [JsonPropertyName("id")] public string Id { get; set; }
-
-    [JsonPropertyName("name")] public string Name { get; set; }
-}

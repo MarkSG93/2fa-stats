@@ -15,8 +15,7 @@ using Stats2fa.utils;
 
 namespace Stats2fa {
     class Program {
-        static async Task<int> Main(string[] args)
-        {
+        static async Task<int> Main(string[] args) {
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
@@ -56,6 +55,12 @@ namespace Stats2fa {
                     dbFileName = config["DatabaseConfiguration:uk1"]!;
                     outputFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{config["DatabaseConfiguration:uk1"]!}_{DateTime.UtcNow:yyyy-M-d-hh-mm-ss}.json");
                     break;
+                case "staging":
+                    apiKey = config["API_STAGING"]!;
+                    baseAddress = config["ApiStrings:staging"]!;
+                    dbFileName = config["DatabaseConfiguration:staging"]!;
+                    outputFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{config["DatabaseConfiguration:staging"]!}_{DateTime.UtcNow:yyyy-M-d-hh-mm-ss}.json");
+                    break;
             }
 
             //  On macOS, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) typically returns the user's home directory (/Users/username) rather than the Documents folder.
@@ -63,12 +68,12 @@ namespace Stats2fa {
             // This is a platform-specific implementation detail of .NET Core on macOS.
             var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
 
-            // Delete existing database if it exists to ensure schema is up to date
-            if (File.Exists(dbPath))
-            {
+            // Delete existing database if exists and deleteDatabase parameter is set
+            if (!string.IsNullOrEmpty(config["deleteDatabase"]) && config["deleteDatabase"].Equals("true") && File.Exists(dbPath)) {
                 Console.WriteLine($"Deleting existing database at {dbPath}");
                 File.Delete(dbPath);
             }
+
 
             await using var db = new StatsContext(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
 
@@ -153,6 +158,9 @@ namespace Stats2fa {
 
                 Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total clients ({allClients.Count:00000})"));
                 await Cache.SaveClients(db, allClients, reportDate);
+
+                // Step 4 Fetch the Distributor Information
+                await DistributorTasks.PopulateDistributorInformation(httpClient, apiInformation, db, reportDate);
             }
             catch (Exception ex) {
                 Console.WriteLine($"Unhandled exception: {ex.Message}");
@@ -160,7 +168,6 @@ namespace Stats2fa {
                 return (int)ExitCode.UnknownError;
             }
 
-            
             Console.WriteLine("Stats2fa");
             return (int)ExitCode.Success;
         }
