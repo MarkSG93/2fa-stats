@@ -102,7 +102,7 @@ namespace Stats2fa {
                 Window = TimeSpan.FromSeconds(1),
                 SegmentsPerWindow = 1,
                 AutoReplenishment = true,
-                PermitLimit = 15, // requests per window,
+                PermitLimit = 4, // requests per window,
                 // 4 has been found to be the fastest with minor errors
                 // 3 has been to be the fastest with no errors
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
