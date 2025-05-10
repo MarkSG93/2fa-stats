@@ -30,7 +30,7 @@ namespace Stats2fa {
             if (!string.IsNullOrEmpty(config["env"])) environment = config["env"];
             Console.WriteLine($"date={config["date"]}");
             if (string.IsNullOrEmpty(config["date"])) {
-                Console.WriteLine("Warning: No date specified in arguments. Using current UTC date: " + reportDate.ToString("yyyy-MM-dd"));
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, null, $"Warning: No date specified in arguments. Using current UTC date: {reportDate.ToString("yyyy-MM-dd")}"));
             }
             else {
                 reportDate = DateTime.ParseExact(config["date"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
@@ -71,14 +71,14 @@ namespace Stats2fa {
 
             // Delete existing database if exists and deleteDatabase parameter is set
             if (!string.IsNullOrEmpty(config["deleteDatabase"]) && config["deleteDatabase"].Equals("true") && File.Exists(dbPath)) {
-                Console.WriteLine($"Deleting existing database at {dbPath}");
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, null, $"Deleting existing database at {dbPath}"));
                 File.Delete(dbPath);
             }
-
-
+            
             await using var db = new StatsContext(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
 
             // Ensure database is created with current schema
+            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, null, $"ensuring database is created"));
             await db.Database.EnsureCreatedAsync();
 
             if (reportDate > DateTime.UtcNow) {
@@ -97,11 +97,14 @@ namespace Stats2fa {
             };
 
             // Step 0 Setup HttpClient
+            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"setting up http client"));
             var slidingWindowRateLimiterOptions = new SlidingWindowRateLimiterOptions {
                 Window = TimeSpan.FromSeconds(1),
                 SegmentsPerWindow = 1,
                 AutoReplenishment = true,
-                PermitLimit = 4, // requests per window
+                PermitLimit = 15, // requests per window,
+                // 4 has been found to be the fastest with minor errors
+                // 3 has been to be the fastest with no errors
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 10000
             };
@@ -116,6 +119,7 @@ namespace Stats2fa {
 
             try {
                 // Step 1 Fetch the Distributors
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching distributors"));
                 Distributors distributors = await ApiUtils.GetDistributors(httpClient, apiInformation, null, Convert.ToInt32(config["ApiQueryLimits:DistributorLimit"]), Convert.ToInt32(config["ApiQueryLimits:DistributorMax"]));
                 Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total distributors ({distributors.Count:00000})"));
                 await Cache.SaveDistributors(db, distributors, reportDate);
@@ -126,6 +130,7 @@ namespace Stats2fa {
                 }
 
                 // Step 2 Fetch the Vendors
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching vendors"));
                 ConcurrentBag<Vendor> allVendors = new ConcurrentBag<Vendor>();
                 try {
                     await Task.WhenAll(Parallel.ForEachAsync(source: distributors.DistributorList, (distributor, cancellationToken) =>
@@ -146,6 +151,7 @@ namespace Stats2fa {
                 }
 
                 // Step 3 Fetch the Clients
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching clients"));
                 ConcurrentBag<Client> allClients = new ConcurrentBag<Client>();
                 try {
                     await Task.WhenAll(Parallel.ForEachAsync(source: allVendors, (vendor, cancellationToken) =>
@@ -161,14 +167,16 @@ namespace Stats2fa {
                 await Cache.SaveClients(db, allClients, reportDate);
 
                 // Step 4 Fetch the Distributor Information
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching distributor information"));
                 await DistributorTasks.PopulateDistributorInformation(httpClient, apiInformation, db, reportDate);
-                
+
                 // Step 5 Fetch the Vendor Information
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching vendor information"));
                 await VendorTasks.PopulateVendorInformation(httpClient, apiInformation, db, reportDate);
-                
+
                 // Step 6 Fetch the Client Information
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching client information"));
                 await ClientTasks.PopulateClientInformation(httpClient, apiInformation, db, reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
-                
             }
             catch (Exception ex) {
                 Console.WriteLine($"Unhandled exception: {ex.Message}");

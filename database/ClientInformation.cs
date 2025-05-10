@@ -16,6 +16,7 @@ public class ClientInformation {
     [JsonPropertyName("client_type")] public string ClientType { get; set; }
     
     // Nullable info
+    [JsonPropertyName("client_stats_status")] public string? ClientStatsStatus { get; set; }
     [JsonPropertyName("client_status")] public string? ClientStatus { get; set; }
     
     [JsonPropertyName(" client_passwordPolicy_source_id")]

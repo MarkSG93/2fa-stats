@@ -25,8 +25,13 @@ internal static class StringUtils {
         return Log(time: time, environment, distributorId, vendorId, clientId, new List<string> { message });
     }
 
-    public static string Log(DateTime? time, string? environment, string? distributorId, string? vendorId, string? clientId, ApiInformation stats, string message)
+    public static string Log(DateTime? time, string? environment, string? distributorId, string? vendorId, string? clientId, ApiInformation? stats, string message)
     {
+        if (stats == null)
+        {
+            return Log(time: time, environment, distributorId, vendorId, clientId, new List<string> { message });
+        }
+
         return Log(time: time, environment, distributorId, vendorId, clientId, new List<string> { $"{stats.ApiCallsDistributors + stats.ApiCallsVendors + stats.ApiCallsClients} calls", message });
     }
 
