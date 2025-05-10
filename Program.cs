@@ -25,6 +25,7 @@ namespace Stats2fa {
             _logger = loggerFactory.CreateLogger<Program>(); // Assign logger to static field
 
             // Initialize PacketLogger with the logger
+            _logger.LogInformation($"Stats2fa starting");
             StatsLogger.InitializeLogger(_logger);
 
             IConfiguration config = new ConfigurationBuilder()
@@ -38,13 +39,14 @@ namespace Stats2fa {
             String apiKey = null, baseAddress = null, dbFileName = null, outputFileName = null;
 
             if (!string.IsNullOrEmpty(config["env"])) environment = config["env"];
-            _logger.LogInformation($"date={config["date"]}");
+            StatsLogger.Log(null, $"arguments supplied date={config["date"]}");
+
             if (string.IsNullOrEmpty(config["date"])) {
-                StatsLogger.Log(null, $"Warning: No date specified in arguments. Using current UTC date: {reportDate:yyyy-MM-dd}");
+                StatsLogger.Log(null, $"Warning: No date specified in arguments. Using current UTC date: {reportDate:yyyy-MM-dd}", environment: environment);
             }
             else {
                 reportDate = DateTime.ParseExact(config["date"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
-                StatsLogger.Log(null, $"Date specified: {reportDate:yyyy-MM-dd}");
+                StatsLogger.Log(null, $"Date specified: {reportDate:yyyy-MM-dd}", environment: environment);
             }
 
             switch (environment) {
