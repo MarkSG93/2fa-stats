@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Stats2fa.api.models;
+using Stats2fa.logger;
 
 namespace Stats2fa.api;
 
@@ -30,7 +31,7 @@ internal class ApiUtils {
             // Check if the request was successful
             if (!httpResponse.IsSuccessStatusCode)
             {
-                Console.WriteLine($"HTTP error {httpResponse.StatusCode} getting distributors. URL: {client.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation, $"HTTP error {httpResponse.StatusCode} getting distributors. URL: {client.BaseAddress}{url}");
                 return distributors; // Return what we have so far
             }
 
@@ -38,7 +39,7 @@ internal class ApiUtils {
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json"))
             {
-                Console.WriteLine($"Unexpected content type: {contentType} getting distributors. URL: {client.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation,$"Unexpected content type: {contentType} getting distributors. URL: {client.BaseAddress}{url}");
                 return distributors; // Return what we have so far
             }
 
@@ -46,18 +47,18 @@ internal class ApiUtils {
             response = await httpResponse.Content.ReadFromJsonAsync<Distributors>() ?? new Distributors();
         }
         catch (System.Text.Json.JsonException jsonEx) {
-            Console.WriteLine($"JSON parsing error getting distributors. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(jsonEx.Message);
+            StatsLogger.Log(apiInformation,$"JSON parsing error getting distributors. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,jsonEx.Message);
             return distributors; // Return what we have so far
         }
         catch (TaskCanceledException tcEx) {
-            Console.WriteLine($"Request timeout or cancellation getting distributors. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(tcEx.Message);
+            StatsLogger.Log(apiInformation,$"Request timeout or cancellation getting distributors. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,tcEx.Message);
             return distributors; // Return what we have so far
         }
         catch (Exception e) {
-            Console.WriteLine($"Error getting distributors. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(e.Message);
+            StatsLogger.Log(apiInformation,$"Error getting distributors. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,e.Message);
             return distributors; // Return what we have so far
         }
 
@@ -91,7 +92,7 @@ internal class ApiUtils {
             // Check if the request was successful
             if (!httpResponse.IsSuccessStatusCode)
             {
-                Console.WriteLine($"HTTP error {httpResponse.StatusCode} getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation,$"HTTP error {httpResponse.StatusCode} getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
 
                 // Just return the current vendors without throwing an exception
                 if (vendors.VendorList.Count > 0)
@@ -108,7 +109,7 @@ internal class ApiUtils {
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json"))
             {
-                Console.WriteLine($"Unexpected content type: {contentType} for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation,$"Unexpected content type: {contentType} for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
 
                 // Just return the current vendors without throwing an exception
                 if (vendors.VendorList.Count > 0)
@@ -126,7 +127,7 @@ internal class ApiUtils {
 
             if (response == null)
             {
-                Console.WriteLine($"Null response getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation,$"Null response getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
 
                 // Just return the current vendors without throwing an exception
                 if (vendors.VendorList.Count > 0)
@@ -140,8 +141,8 @@ internal class ApiUtils {
             }
         }
         catch (System.Text.Json.JsonException jsonEx) {
-            Console.WriteLine($"JSON parsing error getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(jsonEx.Message);
+            StatsLogger.Log(apiInformation,$"JSON parsing error getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,jsonEx.Message);
 
             // Just return the current vendors without throwing an exception
             if (vendors.VendorList.Count > 0)
@@ -154,8 +155,8 @@ internal class ApiUtils {
             return;
         }
         catch (TaskCanceledException tcEx) {
-            Console.WriteLine($"Request timeout or cancellation getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(tcEx.Message);
+            StatsLogger.Log(apiInformation,$"Request timeout or cancellation getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,tcEx.Message);
 
             // Just return the current vendors without throwing an exception
             if (vendors.VendorList.Count > 0)
@@ -168,8 +169,8 @@ internal class ApiUtils {
             return;
         }
         catch (Exception e) {
-            Console.WriteLine($"Error getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(e.Message);
+            StatsLogger.Log(apiInformation,$"Error getting vendors for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,e.Message);
 
             // Just return the current vendors without throwing an exception
             if (vendors.VendorList.Count > 0)
@@ -215,7 +216,7 @@ internal class ApiUtils {
             // Check if the request was successful
             if (!httpResponse.IsSuccessStatusCode)
             {
-                Console.WriteLine($"HTTP error {httpResponse.StatusCode} getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation,$"HTTP error {httpResponse.StatusCode} getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
 
                 // Just return the current clients without throwing an exception
                 if (clients.ClientList.Count > 0)
@@ -232,7 +233,7 @@ internal class ApiUtils {
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json"))
             {
-                Console.WriteLine($"Unexpected content type: {contentType} for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation,$"Unexpected content type: {contentType} for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
 
                 // Just return the current clients without throwing an exception
                 if (clients.ClientList.Count > 0)
@@ -249,8 +250,8 @@ internal class ApiUtils {
             response = await httpResponse.Content.ReadFromJsonAsync<Clients>(cancellationToken: cancellationToken);
         }
         catch (System.Text.Json.JsonException jsonEx) {
-            Console.WriteLine($"JSON parsing error getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(jsonEx.Message);
+            StatsLogger.Log(apiInformation,$"JSON parsing error getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,jsonEx.Message);
 
             // Just return the current clients without throwing an exception
             if (clients.ClientList.Count > 0)
@@ -263,8 +264,8 @@ internal class ApiUtils {
             return;
         }
         catch (TaskCanceledException tcEx) {
-            Console.WriteLine($"Request timeout or cancellation getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(tcEx.Message);
+            StatsLogger.Log(apiInformation,$"Request timeout or cancellation getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,tcEx.Message);
 
             // Just return the current clients without throwing an exception
             if (clients.ClientList.Count > 0)
@@ -277,8 +278,8 @@ internal class ApiUtils {
             return;
         }
         catch (Exception e) {
-            Console.WriteLine($"Error getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(e.Message);
+            StatsLogger.Log(apiInformation,$"Error getting clients for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation,e.Message);
 
             // Just return the current clients without throwing an exception
             if (clients.ClientList.Count > 0)
@@ -292,7 +293,7 @@ internal class ApiUtils {
         }
 
         if (response == null) {
-            Console.WriteLine($"[{DateTime.UtcNow:s}][   ][{vendor.owner.Id}][{vendor.Id}][{Guid.Empty}] Error fetching clients ({clients.ClientList.Count:00000})");
+            StatsLogger.Log(apiInformation,$"[{DateTime.UtcNow:s}][   ][{vendor.owner.Id}][{vendor.Id}][{Guid.Empty}] Error fetching clients ({clients.ClientList.Count:00000})");
 
             // Just return the current clients without throwing an exception
             if (clients.ClientList.Count > 0)

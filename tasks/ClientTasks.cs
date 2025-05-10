@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Stats2fa.api;
 using Stats2fa.api.models;
 using Stats2fa.database;
+using Stats2fa.logger;
 using Stats2fa.utils;
 
 namespace Stats2fa.tasks;
@@ -18,30 +19,28 @@ internal class ClientTasks {
         // Maximum recursion depth to prevent stack overflow
         const int MaxRecursionDepth = 100;
         if (recursionDepth > MaxRecursionDepth) {
-            Console.WriteLine($"Maximum recursion depth reached ({MaxRecursionDepth}). Stopping client population to prevent infinite loop.");
+            StatsLogger.Log(apiInformation, $"Maximum recursion depth reached ({MaxRecursionDepth}). Stopping client population to prevent infinite loop.");
             return;
         }
 
         // Maximum clients check
         var pageSize = 100;
         if (maxClients > 0 && counter >= maxClients) {
-            Console.WriteLine($"Reached maximum specified clients ({maxClients}). Stopping further processing.");
+            StatsLogger.Log(apiInformation, $"Reached maximum specified clients ({maxClients}). Stopping further processing.");
             return;
         }
 
         // Process unprocessed clients
         try {
-            Console.WriteLine($"Fetching clients < {reportDate:s} (Batch {recursionDepth + 1})");
-            List<ClientInformation> clients = FetchUnprocessedClients(db, pageSize, reportDate);
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"fetching {clients.Count} clients to update"));
+            StatsLogger.Log(apiInformation, $"Fetching clients < {reportDate:s} (Batch {recursionDepth + 1})");
+            List<ClientInformation> clients = FetchUnprocessedClients(db, pageSize, reportDate, apiInformation);
+            StatsLogger.Log(apiInformation, $"Fetching {clients.Count} clients to update");
 
             if (clients.Any()) {
                 int processedCount = 0;
                 try {
                     // Limit parallelism to avoid overwhelming the API and causing timeouts
-                    var parallelOptions = new ParallelOptions {
-                        MaxDegreeOfParallelism = Math.Min(5, Environment.ProcessorCount)
-                    };
+                    var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Math.Min(5, Environment.ProcessorCount) };
 
                     await Parallel.ForEachAsync(source: clients, parallelOptions, async (client, cancellationToken) =>
                     {
@@ -52,46 +51,46 @@ internal class ClientTasks {
                             // Log progress periodically
                             int current = Interlocked.CompareExchange(ref processedCount, 0, 0);
                             if (current % 10 == 0) {
-                                Console.WriteLine($"Progress: Processed {current}/{clients.Count} clients");
+                                StatsLogger.Log(apiInformation, $"Progress: Processed {current}/{clients.Count} clients");
                             }
                         }
                         catch (Exception ex) {
-                            Console.WriteLine($"Error processing client {client.ClientId}: {ex.Message}");
+                            StatsLogger.Log(apiInformation, $"Error processing client {client.ClientId}: {ex.Message}");
                             // Continue with other clients despite this error
                         }
                     });
 
-                    Console.WriteLine($"Completed processing {processedCount}/{clients.Count} clients in batch {recursionDepth + 1}");
+                    StatsLogger.Log(apiInformation, $"Completed processing {processedCount}/{clients.Count} clients in batch {recursionDepth + 1}");
 
                     try {
-                        Console.WriteLine("Saving changes to database...");
+                        StatsLogger.Log(apiInformation, "Saving changes to database...");
                         await db.SaveChangesAsync();
                         counter += clients.Count;
-                        Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"checkpointed {clients.Count} clients"));
+                        StatsLogger.Log(apiInformation, $"Checkpointed {clients.Count} clients");
                     }
                     catch (Exception ex) {
-                        Console.WriteLine($"Error saving client data to database: {ex.Message}");
+                        StatsLogger.Log(apiInformation, $"Error saving client data to database: {ex.Message}");
                     }
 
                     // Continue with next batch with increment of recursion depth
                     await PopulateClientInformation(httpClient, apiInformation, db, reportDate, maxClients, counter, recursionDepth + 1);
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error during parallel client processing: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error during parallel client processing: {ex.Message}");
                     // Try to continue with the next batch
                     counter += clients.Count;
                     await PopulateClientInformation(httpClient, apiInformation, db, reportDate, maxClients, counter, recursionDepth + 1);
                 }
             }
             else {
-                Console.WriteLine(StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"No more unprocessed clients found. {counter} clients prepared."));
+                StatsLogger.Log(apiInformation, $"No more unprocessed clients found. {counter} clients prepared.");
 
                 // Only process corrupted clients after we're done with unprocessed clients
                 await ProcessCorruptedClients(httpClient, apiInformation, db, reportDate, maxClients, counter);
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error fetching unprocessed clients: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error fetching unprocessed clients: {ex.Message}");
             // Try to process corrupted clients even if unprocessed clients failed
             await ProcessCorruptedClients(httpClient, apiInformation, db, reportDate, maxClients, counter);
         }
@@ -101,23 +100,21 @@ internal class ClientTasks {
     private static async Task ProcessCorruptedClients(HttpClient httpClient, ApiInformation apiInformation, StatsContext db, DateTime reportDate, int maxClients, int counter, int recursionDepth = 0) {
         const int MaxRecursionDepth = 100;
         if (recursionDepth > MaxRecursionDepth) {
-            Console.WriteLine($"Maximum recursion depth reached for corrupted clients ({MaxRecursionDepth}). Stopping to prevent infinite loop.");
+            StatsLogger.Log(apiInformation, $"Maximum recursion depth reached for corrupted clients ({MaxRecursionDepth}). Stopping to prevent infinite loop.");
             return;
         }
 
         var pageSize = 100;
 
         try {
-            Console.WriteLine($"Fetching corrupted clients (Batch {recursionDepth + 1})");
-            List<ClientInformation> clients = FetchCorruptedClients(db, pageSize, reportDate);
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"fetched {clients.Count} corrupted clients to retry"));
+            StatsLogger.Log(apiInformation, $"Fetching corrupted clients (Batch {recursionDepth + 1})");
+            List<ClientInformation> clients = FetchCorruptedClients(db, pageSize, reportDate, apiInformation);
+            StatsLogger.Log(apiInformation, $"Fetched {clients.Count} corrupted clients to retry");
 
             if (clients.Any()) {
                 int processedCount = 0;
                 try {
-                    var parallelOptions = new ParallelOptions {
-                        MaxDegreeOfParallelism = Math.Min(5, Environment.ProcessorCount)
-                    };
+                    var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Math.Min(5, Environment.ProcessorCount) };
 
                     await Parallel.ForEachAsync(source: clients, parallelOptions, async (client, cancellationToken) =>
                     {
@@ -127,40 +124,40 @@ internal class ClientTasks {
 
                             int current = Interlocked.CompareExchange(ref processedCount, 0, 0);
                             if (current % 10 == 0) {
-                                Console.WriteLine($"Progress: Retried {current}/{clients.Count} corrupted clients");
+                                StatsLogger.Log(apiInformation, $"Progress: Retried {current}/{clients.Count} corrupted clients");
                             }
                         }
                         catch (Exception ex) {
-                            Console.WriteLine($"Error retrying corrupted client {client.ClientId}: {ex.Message}");
+                            StatsLogger.Log(apiInformation, $"Error retrying corrupted client {client.ClientId}: {ex.Message}");
                         }
                     });
 
-                    Console.WriteLine($"Completed retrying {processedCount}/{clients.Count} corrupted clients in batch {recursionDepth + 1}");
+                    StatsLogger.Log(apiInformation, $"Completed retrying {processedCount}/{clients.Count} corrupted clients in batch {recursionDepth + 1}");
 
                     try {
-                        Console.WriteLine("Saving changes to database...");
+                        StatsLogger.Log(apiInformation, "Saving changes to database...");
                         await db.SaveChangesAsync();
                         counter += clients.Count;
-                        Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"checkpointed {clients.Count} corrupted clients"));
+                        StatsLogger.Log(apiInformation, $"Checkpointed {clients.Count} corrupted clients");
                     }
                     catch (Exception ex) {
-                        Console.WriteLine($"Error saving corrupted client data to database: {ex.Message}");
+                        StatsLogger.Log(apiInformation, $"Error saving corrupted client data to database: {ex.Message}");
                     }
 
                     // Continue with next batch
                     await ProcessCorruptedClients(httpClient, apiInformation, db, reportDate, maxClients, counter, recursionDepth + 1);
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error during parallel corrupted client processing: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error during parallel corrupted client processing: {ex.Message}");
                     await ProcessCorruptedClients(httpClient, apiInformation, db, reportDate, maxClients, counter, recursionDepth + 1);
                 }
             }
             else {
-                Console.WriteLine(StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"No more corrupted clients to retry. All client processing complete."));
+                StatsLogger.Log(apiInformation, $"No more corrupted clients to retry. All client processing complete.");
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error fetching corrupted clients: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error fetching corrupted clients: {ex.Message}");
         }
     }
 
@@ -171,21 +168,19 @@ internal class ClientTasks {
             // Set a timeout of 60 seconds for each client operation
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
 
-            var tasks = new List<Task> {
-                GetClientInformationAndSettings(httpClient, apiInformation, client, timeoutCts.Token)
-            };
+            var tasks = new List<Task> { GetClientInformationAndSettings(httpClient, apiInformation, client, timeoutCts.Token) };
 
             await Task.WhenAll(tasks);
             client.CreatedTimestamp = DateTime.UtcNow;
         }
         catch (OperationCanceledException) {
             // Handle cancellation gracefully
-            Console.WriteLine($"Operation for client {client.ClientId} was cancelled");
+            StatsLogger.Log(apiInformation, $"Operation for client {client.ClientId} was cancelled");
             client.ClientStatsStatus = "ERROR_TIMEOUT";
             throw;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error in GetClientInformation for client {client.ClientId}: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error in GetClientInformation for client {client.ClientId}: {ex.Message}");
             client.ClientStatsStatus = "ERROR_EXCEPTION";
             throw;
         }
@@ -204,26 +199,26 @@ internal class ClientTasks {
 
             // Check if the request was successful
             if (!httpResponse.IsSuccessStatusCode) {
-                Console.WriteLine($"HTTP error {httpResponse.StatusCode} getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation, $"HTTP error {httpResponse.StatusCode} getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
                 return;
             }
 
             // Check content type to ensure it's JSON
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
-                Console.WriteLine($"Unexpected content type: {contentType} for client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation, $"Unexpected content type: {contentType} for client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
 
                 // For debugging: try to read the content as string to see what's being returned
                 if (contentType?.Contains("text/html") == true) {
                     try {
                         string htmlContent = await httpResponse.Content.ReadAsStringAsync();
                         // string preview = htmlContent.Length > 100 ? htmlContent.Substring(0, 100) + "..." : htmlContent;
-                        Console.WriteLine($"HTML response preview: {htmlContent}");
+                        StatsLogger.Log(apiInformation, $"HTML response preview: {htmlContent}");
 
                         clientInformation.ClientStatsStatus = "ERROR_HTML_RESPONSE";
                     }
                     catch (Exception ex) {
-                        Console.WriteLine($"Error reading HTML content: {ex.Message}");
+                        StatsLogger.Log(apiInformation, $"Error reading HTML content: {ex.Message}");
                     }
                 }
 
@@ -234,18 +229,18 @@ internal class ClientTasks {
             response = await httpResponse.Content.ReadFromJsonAsync<Client>() ?? new Client();
         }
         catch (System.Text.Json.JsonException jsonEx) {
-            Console.WriteLine($"JSON parsing error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(jsonEx.Message);
+            StatsLogger.Log(apiInformation, $"JSON parsing error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, jsonEx.Message);
             return;
         }
         catch (TaskCanceledException tcEx) {
-            Console.WriteLine($"Request timeout or cancellation getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(tcEx.Message);
+            StatsLogger.Log(apiInformation, $"Request timeout or cancellation getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, tcEx.Message);
             return;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
-            Console.WriteLine(ex.Message);
+            StatsLogger.Log(apiInformation, $"Error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, ex.Message);
             return;
         }
 
@@ -266,7 +261,7 @@ internal class ClientTasks {
                     clientInformation.ClientPasswordPolicyPasswordComplexityNocommonpasswords = response.passwordPolicy.PasswordComplexity.NoCommonPasswords;
                     clientInformation.ClientPasswordPolicyPasswordComplexitySpecialcharacters = response.passwordPolicy.PasswordComplexity.SpecialCharacters;
                     // Uncomment for debugging
-                    // Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(response.passwordPolicy));
+                    // StatsLogger.Log(apiInformation,System.Text.Json.JsonSerializer.Serialize(response.passwordPolicy));
                 }
 
                 clientInformation.ClientPasswordPolicyPasswordExpirationDays = response.passwordPolicy.PasswordExpirationDays;
@@ -286,14 +281,15 @@ internal class ClientTasks {
                     clientInformation.ClientPasswordPolicyOtpSettingsMandatoryFor = response.passwordPolicy.OtpSettings.MandatoryFor;
                 }
             }
+
             clientInformation.ClientStatsStatus = "SUCCESS";
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error processing client data for {clientInformation.ClientId}: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error processing client data for {clientInformation.ClientId}: {ex.Message}");
         }
     }
 
-    internal static List<ClientInformation> FetchCorruptedClients(StatsContext db, int pageSize, DateTime reportDate) {
+    internal static List<ClientInformation> FetchCorruptedClients(StatsContext db, int pageSize, DateTime reportDate, ApiInformation? apiInformation) {
         try {
             var pageIndex = 1;
             var clients = db.Clients
@@ -303,12 +299,12 @@ internal class ClientTasks {
             return clients.ToList();
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error fetching corrupted clients from database: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error fetching corrupted clients from database: {ex.Message}");
             return new List<ClientInformation>();
         }
     }
 
-    internal static List<ClientInformation> FetchUnprocessedClients(StatsContext db, int pageSize, DateTime reportDate) {
+    internal static List<ClientInformation> FetchUnprocessedClients(StatsContext db, int pageSize, DateTime reportDate, ApiInformation? apiInformation) {
         try {
             var pageIndex = 1;
             var clients = db.Clients
@@ -318,19 +314,19 @@ internal class ClientTasks {
             return clients.ToList();
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error fetching unprocessed clients from database: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error fetching unprocessed clients from database: {ex.Message}");
             return new List<ClientInformation>();
         }
     }
 
-    internal static List<ClientInformation> FetchAllProcessedClients(StatsContext db, DateTime reportDate) {
+    internal static List<ClientInformation> FetchAllProcessedClients(StatsContext db, DateTime reportDate, ApiInformation? apiInformation) {
         try {
             var clients = db.Clients
                 .Where(x => x.CreatedTimestamp > reportDate);
             return clients.ToList();
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error fetching processed clients from database: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error fetching processed clients from database: {ex.Message}");
             return new List<ClientInformation>();
         }
     }

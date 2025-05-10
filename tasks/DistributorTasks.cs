@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Stats2fa.api;
 using Stats2fa.api.models;
 using Stats2fa.database;
+using Stats2fa.logger;
 using Stats2fa.utils;
 
 namespace Stats2fa;
@@ -46,14 +47,14 @@ internal class DistributorTasks {
 
             // Check if the request was successful
             if (!httpResponse.IsSuccessStatusCode) {
-                Console.WriteLine($"HTTP error {httpResponse.StatusCode} getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation, $"HTTP error {httpResponse.StatusCode} getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
                 return;
             }
 
             // Check content type to ensure it's JSON
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
-                Console.WriteLine($"Unexpected content type: {contentType} for distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation, $"Unexpected content type: {contentType} for distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
                 return;
             }
 
@@ -61,18 +62,18 @@ internal class DistributorTasks {
             response = await httpResponse.Content.ReadFromJsonAsync<Distributor>() ?? new Distributor();
         }
         catch (System.Text.Json.JsonException jsonEx) {
-            Console.WriteLine($"JSON parsing error getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(jsonEx.Message);
+            StatsLogger.Log(apiInformation, $"JSON parsing error getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, jsonEx.Message);
             return;
         }
         catch (TaskCanceledException tcEx) {
-            Console.WriteLine($"Request timeout or cancellation getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(tcEx.Message);
+            StatsLogger.Log(apiInformation, $"Request timeout or cancellation getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, tcEx.Message);
             return;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(ex.Message);
+            StatsLogger.Log(apiInformation, $"Error getting distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, ex.Message);
             return;
         }
 
@@ -92,7 +93,7 @@ internal class DistributorTasks {
                     distributorInformation.DistributorPasswordPolicyPasswordComplexityAlphanumerical = response.passwordPolicy.PasswordComplexity.AlphaNumerical;
                     distributorInformation.DistributorPasswordPolicyPasswordComplexityNocommonpasswords = response.passwordPolicy.PasswordComplexity.NoCommonPasswords;
                     distributorInformation.DistributorPasswordPolicyPasswordComplexitySpecialcharacters = response.passwordPolicy.PasswordComplexity.SpecialCharacters;
-                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(response.passwordPolicy));
+                    StatsLogger.Log(apiInformation, System.Text.Json.JsonSerializer.Serialize(response.passwordPolicy));
                 }
 
                 distributorInformation.DistributorPasswordPolicyPasswordExpirationDays = response.passwordPolicy.PasswordExpirationDays;
@@ -114,7 +115,7 @@ internal class DistributorTasks {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error processing distributor data for {distributorInformation.DistributorId}: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error processing distributor data for {distributorInformation.DistributorId}: {ex.Message}");
         }
     }
 
@@ -122,10 +123,9 @@ internal class DistributorTasks {
         StatsContext db, DateTime reportDate, int counter = 0) {
         try {
             var pageSize = 5;
-            Console.WriteLine($"Fetching distributors < {reportDate:s}");
+            StatsLogger.Log(apiInformation, $"Fetching distributors < {reportDate:s}");
             List<DistributorInformation> distributors = FetchUnprocessedDistributors(db, pageSize, reportDate);
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation,
-                $"fetching {distributors.Count} distributors to update"));
+            StatsLogger.Log(apiInformation, $"fetching {distributors.Count} distributors to update");
 
             if (distributors.Any()) {
                 try {
@@ -134,31 +134,29 @@ internal class DistributorTasks {
                             GetDistributorInformation(httpClient, apiInformation, distributor, null, cancellationToken));
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error during distributor information fetching: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error during distributor information fetching: {ex.Message}");
                     // Continue with saving what we have
                 }
 
                 try {
                     await db.SaveChangesAsync();
                     counter += distributors.Count();
-                    Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation,
-                        $"checkpointed {distributors.Count()} distributors"));
+                    StatsLogger.Log(apiInformation, $"checkpointed {distributors.Count()} distributors");
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error saving distributor information to database: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error saving distributor information to database: {ex.Message}");
                 }
 
                 // Process the next batch
                 await PopulateDistributorInformation(httpClient, apiInformation, db, reportDate, counter);
             }
             else {
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation,
-                    $"PopulateDistributorInformation complete {counter} prepared distributors"));
+                StatsLogger.Log(apiInformation, $"PopulateDistributorInformation complete {counter} prepared distributors");
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Unhandled exception in PopulateDistributorInformation: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
+            StatsLogger.Log(apiInformation, $"Unhandled exception in PopulateDistributorInformation: {ex.Message}");
+            StatsLogger.Log(apiInformation, ex.StackTrace);
         }
     }
 }

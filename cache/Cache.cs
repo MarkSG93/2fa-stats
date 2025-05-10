@@ -5,14 +5,15 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Stats2fa.api;
 using Stats2fa.api.models;
 using Stats2fa.database;
+using Stats2fa.logger;
 
 namespace Stats2fa.cache;
 
 internal class Cache {
-    public static async Task SaveDistributors(StatsContext db, Distributors distributors, DateTime reportDate)
-    {
+    public static async Task SaveDistributors(StatsContext db, Distributors distributors, DateTime reportDate, ApiInformation? apiInformation) {
         int progressCounter = 1;
 
         foreach (Distributor distributor in distributors.DistributorList) {
@@ -27,7 +28,7 @@ internal class Cache {
             }
 
             var state = updateRequired ? "preparing" : "skipping";
-            // Console.WriteLine($"[{DateTime.UtcNow:s}][   ][{distributor.Id}][{Guid.Empty}][{Guid.Empty}] {state} distributor\t({progressCounter++:00000}/{distributors.DistributorList.Count:00000})");
+            // StatsLogger.Log(apiInformation,$"[{DateTime.UtcNow:s}][   ][{distributor.Id}][{Guid.Empty}][{Guid.Empty}] {state} distributor\t({progressCounter++:00000}/{distributors.DistributorList.Count:00000})");
 
             if (!recordExists) {
                 distribInfo = new DistributorInformation {
@@ -45,7 +46,7 @@ internal class Cache {
                 if (!recordExists) await db.Distributors.AddAsync(distribInfo);
             }
             catch (Exception e) {
-                Console.WriteLine($"[{DateTime.UtcNow:s}][   ][{distributor.Id}][{Guid.Empty}][{Guid.Empty}] error saving distributor");
+                StatsLogger.Log(apiInformation, $"[{DateTime.UtcNow:s}][   ][{distributor.Id}][{Guid.Empty}][{Guid.Empty}] error saving distributor");
             }
         }
 
@@ -53,8 +54,7 @@ internal class Cache {
         await db.SaveChangesAsync();
     }
 
-    public static async Task SaveVendors(StatsContext db, ConcurrentBag<Vendor> allVendors, DateTime reportDate)
-    {
+    public static async Task SaveVendors(StatsContext db, ConcurrentBag<Vendor> allVendors, DateTime reportDate, ApiInformation? apiInformation) {
         int progressCounter = 1;
         foreach (Vendor vendor in allVendors) {
             var recordExists = false;
@@ -68,7 +68,7 @@ internal class Cache {
             }
 
             var state = updateRequired ? "preparing" : "skipping";
-            // Console.WriteLine($"[{DateTime.UtcNow:s}][   ][{vendor.owner.Id}][{vendor.Id}][{Guid.Empty}] {state} vendor\t\t({progressCounter++:00000}/{allVendors.Count:00000})");
+            // StatsLogger.Log(apiInformation,$"[{DateTime.UtcNow:s}][   ][{vendor.owner.Id}][{vendor.Id}][{Guid.Empty}] {state} vendor\t\t({progressCounter++:00000}/{allVendors.Count:00000})");
 
             if (!recordExists) {
                 vendorInformation = new VendorInformation {
@@ -87,7 +87,7 @@ internal class Cache {
                 if (!recordExists) await db.Vendors.AddAsync(vendorInformation!);
             }
             catch (Exception e) {
-                Console.WriteLine($"[{DateTime.UtcNow:s}][   ][{vendorInformation.VendorDistributorId}][{vendorInformation.VendorId}][{Guid.Empty}] error saving vendor");
+                StatsLogger.Log(apiInformation, $"[{DateTime.UtcNow:s}][   ][{vendorInformation.VendorDistributorId}][{vendorInformation.VendorId}][{Guid.Empty}] error saving vendor");
             }
         }
 
@@ -95,8 +95,7 @@ internal class Cache {
         await db.SaveChangesAsync();
     }
 
-    public static async Task SaveClients(StatsContext db, ConcurrentBag<Client> allClients, DateTime reportDate)
-    {
+    public static async Task SaveClients(StatsContext db, ConcurrentBag<Client> allClients, DateTime reportDate, ApiInformation? apiInformation) {
         int progressCounter = 1;
 
         var temp = allClients.ToList();
@@ -117,7 +116,7 @@ internal class Cache {
             }
 
             var state = updateRequired ? "preparing" : "skipping";
-            // Console.WriteLine($"[{DateTime.UtcNow:s}][   ][{Guid.Empty}][{client.Owner.Id}][{client.Id}] {state} client\t\t({progressCounter++:00000}/{allClients.Count:00000})");
+            // StatsLogger.Log(apiInformation,$"[{DateTime.UtcNow:s}][   ][{Guid.Empty}][{client.Owner.Id}][{client.Id}] {state} client\t\t({progressCounter++:00000}/{allClients.Count:00000})");
 
             if (!recordExists) {
                 clientInformation = new ClientInformation {
@@ -136,7 +135,7 @@ internal class Cache {
                 if (!recordExists) await db.Clients.AddAsync(clientInformation!);
             }
             catch (Exception e) {
-                Console.WriteLine($"Error saving to cache {JsonSerializer.Serialize(clientInformation)}, {e?.InnerException?.Message}");
+                StatsLogger.Log(apiInformation, $"Error saving to cache {JsonSerializer.Serialize(clientInformation)}, {e?.InnerException?.Message}");
             }
         }
 

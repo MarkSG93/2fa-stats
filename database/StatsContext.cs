@@ -1,31 +1,29 @@
 using System;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
+using Stats2fa.api;
+using Stats2fa.logger;
 
 namespace Stats2fa.database {
     public class StatsContext : DbContext, IAsyncDisposable {
         private readonly string _dbPath;
 
-        public StatsContext(string folderPath, string dbName)
-        {
+        public StatsContext(string folderPath, string dbName, ApiInformation? apiInformation) {
             // Ensure the directory exists
-            if (!Directory.Exists(folderPath))
-            {
-                Console.WriteLine($"Creating directory {folderPath}");
+            if (!Directory.Exists(folderPath)) {
+                StatsLogger.Log(apiInformation, $"Creating directory {folderPath}");
                 Directory.CreateDirectory(folderPath);
             }
 
             _dbPath = Path.Combine(folderPath, dbName);
-            Console.WriteLine($"DB Path {_dbPath}");
+            StatsLogger.Log(apiInformation, $"DB Path {_dbPath}");
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
             optionsBuilder.UseSqlite($"Data Source={_dbPath}");
         }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) {
             base.OnModelCreating(modelBuilder);
 
             // Configure DistributorInformation entity
@@ -60,22 +58,19 @@ namespace Stats2fa.database {
         public DbSet<VendorInformation> Vendors { get; set; }
         public DbSet<ClientInformation> Clients { get; set; }
 
-        public static Guid Int2Guid(int value)
-        {
+        public static Guid Int2Guid(int value) {
             byte[] bytes = new byte[16];
             BitConverter.GetBytes(value).CopyTo(bytes, 0);
             return new Guid(bytes);
         }
 
-        public static Int64 Guid2Int(Guid value)
-        {
+        public static Int64 Guid2Int(Guid value) {
             byte[] b = value.ToByteArray();
             Int64 bint = BitConverter.ToInt64(b, 0);
             return bint;
         }
 
-        public static Int64 Guid2Int(string value)
-        {
+        public static Int64 Guid2Int(string value) {
             return Guid2Int(new Guid(value));
         }
     }

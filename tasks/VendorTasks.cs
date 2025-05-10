@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Stats2fa.api;
 using Stats2fa.api.models;
 using Stats2fa.database;
+using Stats2fa.logger;
 using Stats2fa.utils;
 
 namespace Stats2fa.tasks;
@@ -24,7 +25,7 @@ internal class VendorTasks {
 
     private static async ValueTask GetVendorInformation(HttpClient httpClient, ApiInformation apiInformation, VendorInformation vendor, CancellationToken cancellationToken) {
         var tasks = new List<Task> {
-            GetVendorInformationAndSettings(httpClient, apiInformation, vendor), 
+            GetVendorInformationAndSettings(httpClient, apiInformation, vendor),
             // GetVendorStats(httpClient, apiInformation, vendor),
         };
         await Task.WhenAll(tasks);
@@ -44,14 +45,14 @@ internal class VendorTasks {
 
             // Check if the request was successful
             if (!httpResponse.IsSuccessStatusCode) {
-                Console.WriteLine($"HTTP error {httpResponse.StatusCode} getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation, $"HTTP error {httpResponse.StatusCode} getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
                 return;
             }
 
             // Check content type to ensure it's JSON
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
-                Console.WriteLine($"Unexpected content type: {contentType} for vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+                StatsLogger.Log(apiInformation, $"Unexpected content type: {contentType} for vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
                 return;
             }
 
@@ -59,18 +60,18 @@ internal class VendorTasks {
             response = await httpResponse.Content.ReadFromJsonAsync<Vendor>() ?? new Vendor();
         }
         catch (System.Text.Json.JsonException jsonEx) {
-            Console.WriteLine($"JSON parsing error getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(jsonEx.Message);
+            StatsLogger.Log(apiInformation, $"JSON parsing error getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, jsonEx.Message);
             return;
         }
         catch (TaskCanceledException tcEx) {
-            Console.WriteLine($"Request timeout or cancellation getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(tcEx.Message);
+            StatsLogger.Log(apiInformation, $"Request timeout or cancellation getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, tcEx.Message);
             return;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
-            Console.WriteLine(ex.Message);
+            StatsLogger.Log(apiInformation, $"Error getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+            StatsLogger.Log(apiInformation, ex.Message);
             return;
         }
 
@@ -99,7 +100,7 @@ internal class VendorTasks {
                     vendorInformation.VendorPasswordPolicyPasswordComplexityAlphanumerical = response.passwordPolicy.PasswordComplexity.AlphaNumerical;
                     vendorInformation.VendorPasswordPolicyPasswordComplexityNocommonpasswords = response.passwordPolicy.PasswordComplexity.NoCommonPasswords;
                     vendorInformation.VendorPasswordPolicyPasswordComplexitySpecialcharacters = response.passwordPolicy.PasswordComplexity.SpecialCharacters;
-                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(response.passwordPolicy));
+                    StatsLogger.Log(apiInformation, System.Text.Json.JsonSerializer.Serialize(response.passwordPolicy));
                 }
 
                 vendorInformation.VendorPasswordPolicyPasswordExpirationDays = response.passwordPolicy.PasswordExpirationDays;
@@ -121,17 +122,17 @@ internal class VendorTasks {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error processing vendor data for {vendorInformation.VendorId}: {ex.Message}");
+            StatsLogger.Log(apiInformation, $"Error processing vendor data for {vendorInformation.VendorId}: {ex.Message}");
         }
     }
 
-    
+
     public static async Task PopulateVendorInformation(HttpClient httpClient, ApiInformation apiInformation, StatsContext db, DateTime reportDate, int counter = 0) {
         try {
             var pageSize = 10;
-            Console.WriteLine($"Fetching vendors < {reportDate:s}");
+            StatsLogger.Log(apiInformation, $"Fetching vendors < {reportDate:s}");
             List<VendorInformation> vendors = FetchUnprocessedVendors(db, pageSize, reportDate);
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"fetching {vendors.Count} vendors to update"));
+            StatsLogger.Log(apiInformation, $"fetching {vendors.Count} vendors to update");
 
             if (vendors.Any()) {
                 try {
@@ -139,31 +140,29 @@ internal class VendorTasks {
                         GetVendorInformation(httpClient, apiInformation, vendor, cancellationToken));
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error during vendor information fetching: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error during vendor information fetching: {ex.Message}");
                     // Continue with saving what we have
                 }
 
                 try {
                     await db.SaveChangesAsync();
                     counter += vendors.Count;
-                    Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation,
-                        $"checkpointed {vendors.Count} vendors"));
+                    StatsLogger.Log(apiInformation, $"checkpointed {vendors.Count} vendors");
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error saving vendor information to database: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error saving vendor information to database: {ex.Message}");
                 }
 
                 // Process the next batch
                 await PopulateVendorInformation(httpClient, apiInformation, db, reportDate, counter);
             }
             else {
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation,
-                    $"PopulateVendorInformation complete {counter} prepared vendors"));
+                StatsLogger.Log(apiInformation, $"PopulateVendorInformation complete {counter} prepared vendors");
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Unhandled exception in PopulateVendorInformation: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
+            StatsLogger.Log(apiInformation, $"Unhandled exception in PopulateVendorInformation: {ex.Message}");
+            StatsLogger.Log(apiInformation, ex.StackTrace);
         }
     }
 }

@@ -98,7 +98,7 @@ namespace Stats2fa {
                 File.Delete(dbPath);
             }
 
-            await using var db = new StatsContext(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
+            await using var db = new StatsContext(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db", apiInformation);
 
             // Ensure database is created with current schema
             StatsLogger.Log(apiInformation, $"Ensuring database is created");
@@ -136,7 +136,7 @@ namespace Stats2fa {
                 StatsLogger.Log(apiInformation, "Fetching distributors");
                 Distributors distributors = await ApiUtils.GetDistributors(httpClient, apiInformation, null, Convert.ToInt32(config["ApiQueryLimits:DistributorLimit"]), Convert.ToInt32(config["ApiQueryLimits:DistributorMax"]));
                 StatsLogger.Log(apiInformation, $"Total distributors ({distributors.Count:00000})");
-                await Cache.SaveDistributors(db, distributors, reportDate);
+                await Cache.SaveDistributors(db, distributors, reportDate, apiInformation);
 
                 if (distributors.DistributorList.Count == 0) {
                     StatsLogger.Log(apiInformation, "No distributors found. Exiting.");
@@ -157,7 +157,7 @@ namespace Stats2fa {
                 }
 
                 StatsLogger.Log(apiInformation, $"Total vendors ({allVendors.Count:00000})");
-                await Cache.SaveVendors(db, allVendors, reportDate);
+                await Cache.SaveVendors(db, allVendors, reportDate, apiInformation);
 
                 if (allVendors.Count == 0) {
                     StatsLogger.Log(apiInformation, "No vendors found. Exiting.");
@@ -178,7 +178,7 @@ namespace Stats2fa {
                 }
 
                 StatsLogger.Log(apiInformation, $"Total clients ({allClients.Count:00000})");
-                await Cache.SaveClients(db, allClients, reportDate);
+                await Cache.SaveClients(db, allClients, reportDate, apiInformation);
 
                 // Step 4 Fetch the Distributor Information
                 StatsLogger.Log(apiInformation, "Fetching distributor information");
