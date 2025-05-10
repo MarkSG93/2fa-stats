@@ -11,6 +11,7 @@ using Stats2fa.api;
 using Stats2fa.api.models;
 using Stats2fa.cache;
 using Stats2fa.database;
+using Stats2fa.tasks;
 using Stats2fa.utils;
 
 namespace Stats2fa {
@@ -161,6 +162,9 @@ namespace Stats2fa {
 
                 // Step 4 Fetch the Distributor Information
                 await DistributorTasks.PopulateDistributorInformation(httpClient, apiInformation, db, reportDate);
+                
+                // Step 5 Fetch the Vendor Information
+                await VendorTasks.PopulateVendorInformation(httpClient, apiInformation, db, reportDate);
             }
             catch (Exception ex) {
                 Console.WriteLine($"Unhandled exception: {ex.Message}");
