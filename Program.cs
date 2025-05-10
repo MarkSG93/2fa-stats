@@ -165,6 +165,10 @@ namespace Stats2fa {
                 
                 // Step 5 Fetch the Vendor Information
                 await VendorTasks.PopulateVendorInformation(httpClient, apiInformation, db, reportDate);
+                
+                // Step 6 Fetch the Client Information
+                await ClientTasks.PopulateClientInformation(httpClient, apiInformation, db, reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
+                
             }
             catch (Exception ex) {
                 Console.WriteLine($"Unhandled exception: {ex.Message}");

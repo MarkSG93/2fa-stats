@@ -16,7 +16,10 @@ public class Vendor {
     [JsonPropertyName("group")] public string? Group { get; set; }
 
     [JsonPropertyName("availableMapSets")] public List<Common.AvailableMapSet>? AvailableMapSets { get; set; }
-    [JsonPropertyName("availableDeviceTypes")] public List<object>? AvailableDeviceTypes { get; set; }
+
+    [JsonPropertyName("availableDeviceTypes")]
+    public List<object>? AvailableDeviceTypes { get; set; }
+
     [JsonPropertyName("defaultMapSet")] public Common.AvailableMapSet? DefaultMapSet { get; set; }
     [JsonPropertyName("mapSet")] public MapSet? MapSet { get; set; }
 
@@ -41,7 +44,7 @@ public class Vendor {
     [JsonPropertyName("meta")] public Meta? Meta { get; set; }
 }
 
-// Reusing classes from Distributor when possible
+// Reusing classes from Common.cs when possible
 public class MapSet {
     [JsonPropertyName("id")] public string Id { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; }
@@ -99,15 +102,21 @@ public class FeatureConfig {
     [JsonPropertyName("enabled")] public bool? Enabled { get; set; }
     [JsonPropertyName("parameters")] public Dictionary<string, object>? Parameters { get; set; }
     [JsonPropertyName("enableAlertIcon")] public bool? EnableAlertIcon { get; set; }
-    [JsonPropertyName("enableNotifications")] public bool? EnableNotifications { get; set; }
-    [JsonPropertyName("maxOverviewAssets")] public int? MaxOverviewAssets { get; set; }
+
+    [JsonPropertyName("enableNotifications")]
+    public bool? EnableNotifications { get; set; }
+
+    [JsonPropertyName("maxOverviewAssets")]
+    public int? MaxOverviewAssets { get; set; }
 }
 
 public class HistoryFeature : FeatureConfig {
     [JsonPropertyName("tripMode")] public string? TripMode { get; set; }
     [JsonPropertyName("showReplayLines")] public bool? ShowReplayLines { get; set; }
     [JsonPropertyName("telemetryEnabled")] public bool? TelemetryEnabled { get; set; }
-    [JsonPropertyName("tripReplayEnabled")] public bool? TripReplayEnabled { get; set; }
+
+    [JsonPropertyName("tripReplayEnabled")]
+    public bool? TripReplayEnabled { get; set; }
 }
 
 public class ReportsFeature : FeatureConfig {
@@ -133,8 +142,9 @@ public class RoadSpeedFeature : FeatureConfig {
 }
 
 public class NotificationsFeature : FeatureConfig {
-    [JsonPropertyName("enablePopupMessages")] public bool? EnablePopupMessages { get; set; }
-    [JsonPropertyName("enableAssetNotifications")] public bool? EnableAssetNotifications { get; set; }
+    [JsonPropertyName("enablePopupMessages")]
+    public bool? EnablePopupMessages { get; set; }
+
+    [JsonPropertyName("enableAssetNotifications")]
+    public bool? EnableAssetNotifications { get; set; }
 }
-
-
