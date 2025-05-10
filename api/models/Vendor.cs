@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -6,16 +7,134 @@ namespace Stats2fa.api.models;
 public class Vendor {
     [JsonPropertyName("id")] public string Id { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; }
-    [JsonPropertyName("type")] public string Type { get; set; }
-    [JsonPropertyName("state")] public string State { get; set; }
+    [JsonPropertyName("type")] public string? Type { get; set; }
+    [JsonPropertyName("state")] public string? State { get; set; }
+    [JsonPropertyName("website")] public string? Website { get; set; }
+    [JsonPropertyName("timeZoneId")] public string? TimeZoneId { get; set; }
+    [JsonPropertyName("language")] public string? Language { get; set; }
+    [JsonPropertyName("pin")] public string? Pin { get; set; }
+    [JsonPropertyName("group")] public string? Group { get; set; }
 
-    [JsonPropertyName("availableMapSets")] public List<Models.AvailableMapSet> AvailableMapSets { get; set; }
+    [JsonPropertyName("availableMapSets")] public List<Common.AvailableMapSet>? AvailableMapSets { get; set; }
+    [JsonPropertyName("availableDeviceTypes")] public List<object>? AvailableDeviceTypes { get; set; }
+    [JsonPropertyName("defaultMapSet")] public Common.AvailableMapSet? DefaultMapSet { get; set; }
+    [JsonPropertyName("mapSet")] public MapSet? MapSet { get; set; }
 
-    [JsonPropertyName("defaultMapSet")] public Models.AvailableMapSet DefaultMapSet { get; set; }
-
-    [JsonPropertyName("owner")] public Owner owner { get; set; }
-    
-    // TODO update model to handle these responses
-    // {"id":"d3e5a8df-8921-4204-9597-85a430cacfaa","owner":{"id":"c691d59a-4f87-4c19-803c-44e245bf0ca2","name":"Key Telematics"},"name":"Acme Inc","tags":[],"website":"www.acme.com","theme":{"id":"inherited","name":"Inherited","settings":{}},"state":"active","timeZoneId":"Africa/Johannesburg","customFields":{"asset":[{"id":"assetapi","type":"memo","title":"assetapi","values":[],"required":false,"owner":"vendor"},{"id":"assetapi","type":"memo","title":"assetapi","values":[],"required":false,"owner":"vendor"},{"id":"assetapi","type":"memo","title":"assetapi","values":[],"required":false,"owner":"vendor"}],"device":[],"1b67298e-6b5c-41be-bb83-32935c61ef83":[{"id":"cf100102","type":"memo","title":"CF10001ap2i","values":[],"required":false,"owner":"vendor"},{"id":"cf100102","type":"memo","title":"CF10001ap2i","values":[],"required":false,"owner":"vendor"}],"25d2e3d7-7f08-4582-a14b-149e4c839358":[{"id":"testtrailer","type":"text","title":"testtrailer","values":[],"required":false,"owner":"vendor"}]},"domains":[],"language":null,"support":{"email":null,"phone":null},"messages":{"login":null,"suspended":""},"limits":{"entities":{"user":{"total":100,"active":50,"max":500},"userrole":{"total":20,"active":10,"max":100},"alert":{"total":40,"active":20,"max":200},"assetcategory":{"total":100,"active":50,"max":200},"assetgroup":{"total":100,"active":50,"max":200},"assetratingprofile":{"total":100,"active":50,"max":200},"asset":{"total":200,"active":100,"max":10000},"assetstateprofile":{"total":20,"active":10,"max":100},"assettag":{"total":200,"active":100,"max":10000},"accessgroup":{"total":100,"active":50,"max":200},"dashboard":{"total":60,"active":30,"max":100},"device":{"total":200,"active":100,"max":10000},"deviceconfigprofile":{"total":20,"active":10,"max":100},"deviceprovider":{"total":200,"active":100,"max":200},"emailprovider":{"total":20,"active":10,"max":100},"fuelcard":{"total":4000,"active":2000,"max":10000},"geolockprofile":{"total":20,"active":10,"max":100},"inputoutputtype":{"total":60,"active":30,"max":1000},"label":{"total":200,"active":100,"max":1000},"mapset":{"total":20,"active":10,"max":100},"overspeedprofile":{"total":20,"active":10,"max":100},"privacyprofile":{"total":20,"active":10,"max":100},"reporttemplate":{"total":100,"active":50,"max":200},"reminder":{"total":200,"active":100,"max":10000},"scheduledreport":{"total":40,"active":20,"max":100},"simcard":{"total":200,"active":100,"max":10000},"smsgatewayprovider":{"total":20,"active":10,"max":100},"zonegroup":{"total":60,"active":30,"max":100},"zone":{"total":200,"active":100,"max":10000}}},"flags":{"fleet-ui-v2":{"page-alerts-actions":"request_video,label_current_trip","page-alerts-enabled":true,"page-replay-enabled":true,"page-videos-enabled":true,"page-overview-layout":"advanced","page-overview-enabled":true,"page-reporting-enabled":true,"page-reporting-reports":"","page-dashboards-enabled":true,"page-overview-show-tasks":true,"page-overview-show-alerts":true,"page-overview-show-events":true,"page-overview-show-videos":true,"page-overview-show-editing":false,"page-overview-show-sharing":true,"page-overview-show-activity":true,"page-videos-show-savedVideos":true,"page-reporting-show-analytics":true},"fleet-backend-v2":{}},"oidc":{},"entity":{"creationDate":"2017/09/22 08:57:15","modifiedDate":"2025/05/02 10:23:26"},"emailProvider":{"id":"00000000-0000-0000-0000-000000000000","name":"Default","state":"active"},"sslCertificates":[],"retention":{"source":{"id":"b0a530e8-13e3-4bbb-8d72-9144548acade","name":"Key Telematics","type":"distributor"},"retainFor":120,"retainForUnit":"years","horizonDate":"1905-01-01T00:00:00.000Z"},"passwordPolicy":null,"mapSet":null,"features":{"alerts":{"enabled":false,"parameters":{},"enableAlertIcon":false,"enableNotifications":false},"limits":{"enabled":true,"parameters":{},"maxOverviewAssets":300},"billing":{"enabled":false,"parameters":{},"enableNotifications":false},"history":{"enabled":true,"tripMode":"event","parameters":{},"showReplayLines":true,"telemetryEnabled":false,"tripReplayEnabled":true},"reports":{"reports":[],"enabled":false,"parameters":{},"previewMode":"google","reportServer":"default"},"tracking":{"enabled":true,"loadShared":true,"parameters":{},"enableRoutes":true,"enablePolling":true},"analytics":{"enableReports":false,"enableOlap":true,"enabled":false,"parameters":{},"assetGroups":null},"roadSpeed":{"enabled":false,"parameters":{},"assetGroups":null},"customTabs":{"enabled":false,"parameters":{}},"assetRating":{"enabled":false,"parameters":{}},"notifications":{"enabled":false,"parameters":{},"enablePopupMessages":true,"enableAssetNotifications":true}},"pin":"38609019","group":"00000000-0000-0000-0000-000000000000","availableDeviceTypes":[],"measurementUnits":{"distanceUnit":"kilometres","altitudeUnit":"metres","speedUnit":"kilometresPerHour","areaUnit":"squareKilometres","volumeUnit":"litres","weightUnit":"kilograms","timeUnit":"HHmmss","dateUnit":"yyyymmdd1","temperatureUnit":"celsius"},"meta":{"currentMapSetId":"07259224-5265-40d4-86f4-5df70161d73c","mergedFlags":{"fleet-ui-v2":{"page-alerts-actions":"request_video,label_current_trip","page-alerts-enabled":true,"page-replay-enabled":true,"page-videos-enabled":true,"page-overview-layout":"advanced","page-overview-enabled":true,"page-reporting-enabled":true,"page-reporting-reports":"","page-dashboards-enabled":true,"page-overview-show-tasks":true,"page-overview-show-alerts":true,"page-overview-show-events":true,"page-overview-show-videos":true,"page-overview-show-editing":false,"page-overview-show-sharing":true,"page-overview-show-activity":true,"page-videos-show-savedVideos":true,"page-reporting-show-analytics":true},"fleet-backend-v2":{}}}}
-    // {"id":"f7308cdd-e4c2-414c-9835-7e0d6904a5e1","owner":{"id":"c691d59a-4f87-4c19-803c-44e245bf0ca2","name":"Key Telematics"},"name":"JCB Testing","tags":["test"],"website":"www.example.com","theme":{"id":"inherited","name":"Inherited","settings":{}},"state":"active","timeZoneId":"Europe/London","customFields":{"asset":[{"id":"assetapi","type":"memo","title":"assetapi","values":[],"required":false,"owner":"vendor"},{"id":"assetapi","type":"memo","title":"assetapi","values":[],"required":false,"owner":"vendor"},{"id":"assetapi","type":"memo","title":"assetapi","values":[],"required":false,"owner":"vendor"}],"device":[{"id":"external_equipment_id","type":"text","title":"Ext Eq Id","values":[],"required":false,"owner":"client"},{"id":"external_equipment_model","type":"text","title":"Ext Eq Model","values":[],"required":false,"owner":"client"},{"id":"external_equipment_oem_name","type":"text","title":"Ex Eq OEM Name","values":[],"required":false,"owner":"client"},{"id":"external_equipment_serial_number","type":"text","title":"Ext Serial","values":[],"required":false,"owner":"client"}],"1b67298e-6b5c-41be-bb83-32935c61ef83":[{"id":"cf100102","type":"memo","title":"CF10001ap2i","values":[],"required":false,"owner":"vendor"},{"id":"cf100102","type":"memo","title":"CF10001ap2i","values":[],"required":false,"owner":"vendor"}],"25d2e3d7-7f08-4582-a14b-149e4c839358":[{"id":"testtrailer","type":"text","title":"testtrailer","values":[],"required":false,"owner":"vendor"}]},"domains":[],"address":{"address":"k","city":"k","state":"k","country":"BR","code":"98"},"language":"en-us","support":{},"messages":{},"limits":{"entities":{"user":{"total":100,"active":50,"max":500},"userrole":{"total":20,"active":10,"max":100},"alert":{"total":40,"active":20,"max":200},"assetcategory":{"total":100,"active":50,"max":200},"assetgroup":{"total":100,"active":50,"max":200},"assetratingprofile":{"total":100,"active":50,"max":200},"asset":{"total":200,"active":100,"max":10000},"assetstateprofile":{"total":20,"active":10,"max":100},"assettag":{"total":200,"active":100,"max":10000},"accessgroup":{"total":100,"active":50,"max":200},"dashboard":{"total":60,"active":30,"max":100},"device":{"total":200,"active":100,"max":10000},"deviceconfigprofile":{"total":20,"active":10,"max":100},"deviceprovider":{"total":200,"active":100,"max":200},"emailprovider":{"total":20,"active":10,"max":100},"fuelcard":{"total":4000,"active":2000,"max":10000},"geolockprofile":{"total":20,"active":10,"max":100},"inputoutputtype":{"total":60,"active":30,"max":1000},"label":{"total":200,"active":100,"max":1000},"mapset":{"total":20,"active":10,"max":100},"overspeedprofile":{"total":20,"active":10,"max":100},"privacyprofile":{"total":20,"active":10,"max":100},"reporttemplate":{"total":100,"active":50,"max":200},"reminder":{"total":200,"active":100,"max":10000},"scheduledreport":{"total":40,"active":20,"max":100},"simcard":{"total":200,"active":100,"max":10000},"smsgatewayprovider":{"total":20,"active":10,"max":100},"zonegroup":{"total":60,"active":30,"max":100},"zone":{"total":200,"active":100,"max":10000}}},"flags":{"fleet-ui-v2":{"page-replay-enabled":true},"fleet-backend-v2":{"parsing-fnol-enabled":false,"parsing-native-enabled":false,"parsing-linking-enabled":false,"parsing-v2tripcalculation-enabled":true}},"oidc":{},"entity":{"creationDate":"2025/01/17 15:44:26","modifiedDate":"2025/05/10 06:16:21"},"emailProvider":{"id":"00000000-0000-0000-0000-000000000000","name":"Default","state":"active"},"sslCertificates":[],"retention":{"source":{"id":"b0a530e8-13e3-4bbb-8d72-9144548acade","name":"Key Telematics","type":"distributor"},"retainFor":120,"retainForUnit":"years","horizonDate":"1905-01-01T00:00:00.000Z"},"passwordPolicy":{"source":{"id":"f7308cdd-e4c2-414c-9835-7e0d6904a5e1","name":"JCB Testing","type":"client"},"passwordLength":8,"passwordComplexity":{"mixedCase":true,"alphaNumerical":true,"noCommonPasswords":true,"specialCharacters":true},"passwordExpirationDays":0,"otpSettings":{"methods":{"totp":{"tokenValidityDays":30},"email":{"tokenValidityDays":30}},"gracePeriodDays":14,"mandatoryFor":"optional"}},"mapSet":{"id":"07259224-5265-40d4-86f4-5df70161d73c","name":"HERE Vector"},"features":{"alerts":{"enabled":false,"parameters":{},"enableAlertIcon":false},"limits":{"enabled":false,"parameters":{},"maxOverviewAssets":300},"billing":{"enabled":false,"parameters":{}},"history":{"enabled":true,"parameters":{},"showReplayLines":true,"telemetryEnabled":false,"tripReplayEnabled":true},"reports":{"reports":[],"enabled":false,"parameters":{}},"tracking":{"enabled":true,"loadShared":false,"parameters":{},"enableRoutes":true,"enablePolling":true},"analytics":{"enableReports":false,"enableOlap":true,"enabled":false,"parameters":{}},"roadSpeed":{"enabled":false,"parameters":{},"assetGroups":[]},"customTabs":{"enabled":false,"parameters":{}},"assetRating":{"enabled":false,"parameters":{}},"notifications":{"enabled":false,"parameters":{},"enablePopupMessages":true,"enableAssetNotifications":true}},"pin":"99639066","group":"ca1f210f-5181-4b0b-9434-3f1c3e70b329","availableDeviceTypes":[],"measurementUnits":{"distanceUnit":"kilometres","altitudeUnit":"metres","speedUnit":"kilometresPerHour","areaUnit":"squareKilometres","volumeUnit":"litres","weightUnit":"kilograms","timeUnit":"HHmmss","dateUnit":"yyyymmdd1","temperatureUnit":"celsius"},"meta":{"currentMapSetId":"07259224-5265-40d4-86f4-5df70161d73c","mergedFlags":{"fleet-backend-v2":{"privacy-trip_privacy-enabled":true,"parsing-fnol-enabled":false,"parsing-native-enabled":false,"parsing-linking-enabled":false,"parsing-v2tripcalculation-enabled":true},"fleet-ui-v2":{"page-overview-enabled":true,"page-overview-show-activity":true,"page-overview-show-events":true,"page-overview-show-alerts":true,"page-overview-show-videos":true,"page-overview-show-sharing":true,"page-overview-show-tasks":true,"page-overview-show-editing":true,"page-overview-layout":"advanced","page-dashboards-enabled":true,"page-dashboards-show-hours":true,"page-videos-enabled":true,"page-alerts-enabled":true,"page-alerts-actions":"request_video,label_current_trip","page-replay-enabled":true,"page-mapsearch-enabled":true,"page-assetperformance-enabled":true,"page-reporting-enabled":true,"page-reporting-show-analytics":true,"page-reporting-reports":"b1f5ce5c-f398-4f59-b53e-58d51ad5fce3,2790a38c-0c18-11e8-ba89-0ed5f89f7183,bf13590a-3511-4d4e-baa7-12ff41275111,388ea3f7-3961-4bdd-8aab-b79079e4ab60,6feb51b8-e532-428f-bff7-151d20e6cb62,2790a38c-0c18-11e8-ba89-0ed5f89f7184,f85684aa-103e-4372-a14d-63a2d28efd16,27909fd6-0c18-11e8-ba89-0ed5f89f7180,8fe434fa-e8c7-4389-8426-2d5e3b1292ff,3938b0e8-de20-491e-b22f-7f4ca884cdd7,6a6ebde2-252c-4cb5-aac3-b3c47a9b1b3f,810eb4f4-28d4-4489-839a-c6bf9eef4cba,ea154b87-64bc-4721-a65b-a358300f956c,285e0303-3bea-4f09-8fe9-b20820ada9d1,2790a38c-0c18-11e8-ba89-0ed5f89f7181,6215e640-66cf-4f2a-8383-f7da5e5c0ec0,2790a38c-0c18-11e8-ba89-0ed5f89f7182,e5c0e6d7-05cd-428f-aa76-4c9b00a725e3,2790a38c-0c18-11e8-ba89-0ed5f89f7186,d19c6c65-3403-4312-b943-657ee969e9c1,1c0b23af-fdcf-4c7c-a82d-00c975184edb,c4a0609c-8717-4976-bbcb-418297877847,bf9e1487-e70b-4e21-aa94-b6e28cd098de,7c4cd678-8c1f-4349-aca3-0085126ef458,604d9bfa-8b1c-45dd-9294-939c6d0a90ef,129331e9-d6cc-42b7-85b0-4fc7e945c9a8,d2802d19-94d1-40af-b81d-55da2c767fbe,5fcf57d6-3f82-4a75-8e6b-50b36f2b6a44,55cc1036-b62c-4f11-a99d-ae630431ccb1,2790a38c-0c18-11e8-ba89-0ed5f89f7188,20ba0005-20c9-46d5-9211-8a38cebfd414,ac316ed9-ff00-4c35-a7d8-13f474315271,f47f9cc0-c537-4b75-858c-09f45fdaa12f,00c375fb-c747-41c4-9f83-d584b405240b,d90c6d5a-5b61-4fef-932c-73d904822597,2790a38c-0c18-11e8-ba89-0ed5f89f7185,b9808fe2-1462-4d4d-b63a-03d269f20e76,02886f39-f4a3-4203-8ba3-839efbca534c,2c2d4eec-a49a-4030-b494-f84fce9608bd,fbad3f40-a5f0-4db1-9a93-20ec6ddbae90","page-reporting-dateLimitOverride":true,"page-external-enabled":true,"page-admin-enabled":true,"page-admin-show-fuelCards":true,"page-admin-availableAssetTypes":"30f666d9-8ceb-4517-9310-9f762d5e8383,2c68fe1d-74ef-406a-9108-04c44d42fcb2,1d2623aa-6b23-41ce-bd99-e93fa897e990,6e3e6a58-6ecf-406c-99ce-89b4bc0ff887,bf3f0c80-e7a7-4574-9805-43b82b4e5fce,25d2e3d7-7f08-4582-a14b-149e4c839358,187ef63a-73bf-4fd9-baed-59af4ab2c052,1b67298e-6b5c-41be-bb83-32935c61ef83","page-geofence-enabled":true}}}}
+    [JsonPropertyName("owner")] public Common.Owner? owner { get; set; }
+    [JsonPropertyName("tags")] public List<string>? Tags { get; set; }
+    [JsonPropertyName("theme")] public Theme? Theme { get; set; }
+    [JsonPropertyName("customFields")] public Dictionary<string, List<CustomField>>? CustomFields { get; set; }
+    [JsonPropertyName("domains")] public List<string>? Domains { get; set; }
+    [JsonPropertyName("address")] public Address? Address { get; set; }
+    [JsonPropertyName("support")] public Support? Support { get; set; }
+    [JsonPropertyName("messages")] public Messages? Messages { get; set; }
+    [JsonPropertyName("limits")] public Limits? Limits { get; set; }
+    [JsonPropertyName("flags")] public Dictionary<string, object>? Flags { get; set; }
+    [JsonPropertyName("oidc")] public Dictionary<string, object>? Oidc { get; set; }
+    [JsonPropertyName("entity")] public Entity? Entity { get; set; }
+    [JsonPropertyName("emailProvider")] public EmailProvider? EmailProvider { get; set; }
+    [JsonPropertyName("sslCertificates")] public List<SslCertificate>? SslCertificates { get; set; }
+    [JsonPropertyName("retention")] public Retention? Retention { get; set; }
+    [JsonPropertyName("passwordPolicy")] public Common.PasswordPolicy? passwordPolicy { get; set; }
+    [JsonPropertyName("features")] public Features? Features { get; set; }
+    [JsonPropertyName("measurementUnits")] public MeasurementUnits? MeasurementUnits { get; set; }
+    [JsonPropertyName("meta")] public Meta? Meta { get; set; }
 }
+
+// Reusing classes from Distributor when possible
+public class MapSet {
+    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
+}
+
+public class CustomField {
+    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("type")] public string Type { get; set; }
+    [JsonPropertyName("title")] public string Title { get; set; }
+    [JsonPropertyName("values")] public List<string> Values { get; set; }
+    [JsonPropertyName("required")] public bool Required { get; set; }
+    [JsonPropertyName("owner")] public string Owner { get; set; }
+}
+
+public class Address {
+    [JsonPropertyName("address")] public string? Address1 { get; set; }
+    [JsonPropertyName("city")] public string? City { get; set; }
+    [JsonPropertyName("state")] public string? State { get; set; }
+    [JsonPropertyName("country")] public string? Country { get; set; }
+    [JsonPropertyName("code")] public string? Code { get; set; }
+}
+
+public class MeasurementUnits {
+    [JsonPropertyName("distanceUnit")] public string? DistanceUnit { get; set; }
+    [JsonPropertyName("altitudeUnit")] public string? AltitudeUnit { get; set; }
+    [JsonPropertyName("speedUnit")] public string? SpeedUnit { get; set; }
+    [JsonPropertyName("areaUnit")] public string? AreaUnit { get; set; }
+    [JsonPropertyName("volumeUnit")] public string? VolumeUnit { get; set; }
+    [JsonPropertyName("weightUnit")] public string? WeightUnit { get; set; }
+    [JsonPropertyName("timeUnit")] public string? TimeUnit { get; set; }
+    [JsonPropertyName("dateUnit")] public string? DateUnit { get; set; }
+    [JsonPropertyName("temperatureUnit")] public string? TemperatureUnit { get; set; }
+}
+
+public class Meta {
+    [JsonPropertyName("currentMapSetId")] public string? CurrentMapSetId { get; set; }
+    [JsonPropertyName("mergedFlags")] public Dictionary<string, Dictionary<string, object>>? MergedFlags { get; set; }
+}
+
+public class Features {
+    [JsonPropertyName("alerts")] public FeatureConfig? Alerts { get; set; }
+    [JsonPropertyName("limits")] public FeatureConfig? Limits { get; set; }
+    [JsonPropertyName("billing")] public FeatureConfig? Billing { get; set; }
+    [JsonPropertyName("history")] public HistoryFeature? History { get; set; }
+    [JsonPropertyName("reports")] public ReportsFeature? Reports { get; set; }
+    [JsonPropertyName("tracking")] public TrackingFeature? Tracking { get; set; }
+    [JsonPropertyName("analytics")] public AnalyticsFeature? Analytics { get; set; }
+    [JsonPropertyName("roadSpeed")] public RoadSpeedFeature? RoadSpeed { get; set; }
+    [JsonPropertyName("customTabs")] public FeatureConfig? CustomTabs { get; set; }
+    [JsonPropertyName("assetRating")] public FeatureConfig? AssetRating { get; set; }
+    [JsonPropertyName("notifications")] public NotificationsFeature? Notifications { get; set; }
+}
+
+public class FeatureConfig {
+    [JsonPropertyName("enabled")] public bool? Enabled { get; set; }
+    [JsonPropertyName("parameters")] public Dictionary<string, object>? Parameters { get; set; }
+    [JsonPropertyName("enableAlertIcon")] public bool? EnableAlertIcon { get; set; }
+    [JsonPropertyName("enableNotifications")] public bool? EnableNotifications { get; set; }
+    [JsonPropertyName("maxOverviewAssets")] public int? MaxOverviewAssets { get; set; }
+}
+
+public class HistoryFeature : FeatureConfig {
+    [JsonPropertyName("tripMode")] public string? TripMode { get; set; }
+    [JsonPropertyName("showReplayLines")] public bool? ShowReplayLines { get; set; }
+    [JsonPropertyName("telemetryEnabled")] public bool? TelemetryEnabled { get; set; }
+    [JsonPropertyName("tripReplayEnabled")] public bool? TripReplayEnabled { get; set; }
+}
+
+public class ReportsFeature : FeatureConfig {
+    [JsonPropertyName("reports")] public List<string>? Reports { get; set; }
+    [JsonPropertyName("previewMode")] public string? PreviewMode { get; set; }
+    [JsonPropertyName("reportServer")] public string? ReportServer { get; set; }
+}
+
+public class TrackingFeature : FeatureConfig {
+    [JsonPropertyName("loadShared")] public bool? LoadShared { get; set; }
+    [JsonPropertyName("enableRoutes")] public bool? EnableRoutes { get; set; }
+    [JsonPropertyName("enablePolling")] public bool? EnablePolling { get; set; }
+}
+
+public class AnalyticsFeature : FeatureConfig {
+    [JsonPropertyName("enableReports")] public bool? EnableReports { get; set; }
+    [JsonPropertyName("enableOlap")] public bool? EnableOlap { get; set; }
+    [JsonPropertyName("assetGroups")] public object? AssetGroups { get; set; }
+}
+
+public class RoadSpeedFeature : FeatureConfig {
+    [JsonPropertyName("assetGroups")] public object? AssetGroups { get; set; }
+}
+
+public class NotificationsFeature : FeatureConfig {
+    [JsonPropertyName("enablePopupMessages")] public bool? EnablePopupMessages { get; set; }
+    [JsonPropertyName("enableAssetNotifications")] public bool? EnableAssetNotifications { get; set; }
+}
+
+

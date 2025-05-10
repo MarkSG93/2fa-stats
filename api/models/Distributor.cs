@@ -15,7 +15,7 @@ public class Distributor {
     [JsonPropertyName("availableEmailProviders")]
     public List<AvailableEmailProvider>? AvailableEmailProviders { get; set; }
 
-    [JsonPropertyName("owner")] public Owner? Owner { get; set; }
+    [JsonPropertyName("owner")] public Common.Owner? Owner { get; set; }
     [JsonPropertyName("tags")] public List<string>? Tags { get; set; }
     [JsonPropertyName("theme")] public Theme? Theme { get; set; }
     [JsonPropertyName("customFields")] public Dictionary<string, object>? CustomFields { get; set; }
@@ -29,14 +29,9 @@ public class Distributor {
     [JsonPropertyName("emailProvider")] public EmailProvider? EmailProvider { get; set; }
     [JsonPropertyName("sslCertificates")] public List<SslCertificate>? SslCertificates { get; set; }
     [JsonPropertyName("retention")] public Retention? Retention { get; set; }
-    [JsonPropertyName("passwordPolicy")] public PasswordPolicy? passwordPolicy { get; set; }
+    [JsonPropertyName("passwordPolicy")] public Common.PasswordPolicy? passwordPolicy { get; set; }
     [JsonPropertyName("vendorGroups")] public List<VendorGroup>? VendorGroups { get; set; }
     [JsonPropertyName("features")] public Features? Features { get; set; }
-}
-
-public class Owner {
-    [JsonPropertyName("id")] public string Id { get; set; }
-    [JsonPropertyName("name")] public string Name { get; set; }
 }
 
 public class Theme {
@@ -98,56 +93,10 @@ public class SslCertificate {
 }
 
 public class Retention {
-    [JsonPropertyName("source")] public Source Source { get; set; }
+    [JsonPropertyName("source")] public Common.Source Source { get; set; }
     [JsonPropertyName("retainFor")] public int RetainFor { get; set; }
     [JsonPropertyName("retainForUnit")] public string RetainForUnit { get; set; }
     [JsonPropertyName("horizonDate")] public string HorizonDate { get; set; }
-}
-
-public class Source {
-    [JsonPropertyName("id")] public string Id { get; set; }
-    [JsonPropertyName("name")] public string Name { get; set; }
-    [JsonPropertyName("type")] public string Type { get; set; }
-}
-
-public class PasswordPolicy {
-    [JsonPropertyName("source")] public Source Source { get; set; }
-    [JsonPropertyName("passwordLength")] public int PasswordLength { get; set; }
-
-    [JsonPropertyName("passwordComplexity")]
-    public PasswordComplexity PasswordComplexity { get; set; }
-
-    [JsonPropertyName("passwordExpirationDays")]
-    public int PasswordExpirationDays { get; set; }
-
-    [JsonPropertyName("otpSettings")] public OtpSettings OtpSettings { get; set; }
-}
-
-public class PasswordComplexity {
-    [JsonPropertyName("mixedCase")] public bool MixedCase { get; set; }
-    [JsonPropertyName("alphaNumerical")] public bool AlphaNumerical { get; set; }
-
-    [JsonPropertyName("noCommonPasswords")]
-    public bool NoCommonPasswords { get; set; }
-
-    [JsonPropertyName("specialCharacters")]
-    public bool SpecialCharacters { get; set; }
-}
-
-public class OtpSettings {
-    [JsonPropertyName("methods")] public OtpMethods Methods { get; set; }
-    [JsonPropertyName("gracePeriodDays")] public int GracePeriodDays { get; set; }
-    [JsonPropertyName("mandatoryFor")] public string MandatoryFor { get; set; }
-}
-
-public class OtpMethods {
-    [JsonPropertyName("totp")] public TokenValidity Totp { get; set; }
-    [JsonPropertyName("email")] public TokenValidity Email { get; set; }
-}
-
-public class TokenValidity {
-    [JsonPropertyName("tokenValidityDays")]
-    public int TokenValidityDays { get; set; }
 }
 
 public class VendorGroup {
@@ -155,19 +104,8 @@ public class VendorGroup {
     [JsonPropertyName("name")] public string Name { get; set; }
 }
 
-public class Features {
-    [JsonPropertyName("analytics")] public FeatureConfig Analytics { get; set; }
-    [JsonPropertyName("roadSpeed")] public FeatureConfig RoadSpeed { get; set; }
-    [JsonPropertyName("providerFeatures")] public List<object> ProviderFeatures { get; set; }
-}
-
-public class FeatureConfig {
-    [JsonPropertyName("enabled")] public bool Enabled { get; set; }
-    [JsonPropertyName("parameters")] public Dictionary<string, object> Parameters { get; set; }
-}
-
 // Use the AvailableMapSet from Models to maintain compatibility
-public class AvailableMapSet : Models.AvailableMapSet {
+public class AvailableMapSet : Common.AvailableMapSet {
 }
 
 public class AvailableEmailProvider {

@@ -20,10 +20,6 @@ public class VendorInformation {
     [JsonPropertyName("vendor_status")] public string VendorStatus { get; set; }
 
     // Nullable info
-// Nullable info
-    [JsonPropertyName("vendor_last_updated")]
-    public DateTime? LastUpdatedTimestamp { get; set; }
-
     [JsonPropertyName("vendor_passwordPolicy_source_id")]
     public string? VendorPasswordPolicySourceId { get; set; }
 

@@ -34,14 +34,57 @@ internal class VendorTasks {
     private static async Task GetVendorInformationAndSettings(HttpClient client, ApiInformation apiInformation, VendorInformation vendorInformation) {
         apiInformation.ApiCallsVendors++;
         apiInformation.LastUpdated = DateTime.UtcNow;
-        var response = await client.GetFromJsonAsync<Vendor>($"accounts/vendors/{vendorInformation.VendorId}");
-        List<string> names = new List<string>();
-        foreach (var item in response.AvailableMapSets) {
-            names.Add(item.Name);
-        }
-        
+
+        string url = $"accounts/vendors/{vendorInformation.VendorId}";
+        Vendor response;
+
         try {
-            vendorInformation.LastUpdatedTimestamp = DateTime.UtcNow;
+            // Use GetAsync instead of GetFromJsonAsync for more robust error handling
+            var httpResponse = await client.GetAsync(url);
+
+            // Check if the request was successful
+            if (!httpResponse.IsSuccessStatusCode) {
+                Console.WriteLine($"HTTP error {httpResponse.StatusCode} getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+                return;
+            }
+
+            // Check content type to ensure it's JSON
+            var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+            if (contentType == null || !contentType.Contains("application/json")) {
+                Console.WriteLine($"Unexpected content type: {contentType} for vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+                return;
+            }
+
+            // Read as JSON
+            response = await httpResponse.Content.ReadFromJsonAsync<Vendor>() ?? new Vendor();
+        }
+        catch (System.Text.Json.JsonException jsonEx) {
+            Console.WriteLine($"JSON parsing error getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+            Console.WriteLine(jsonEx.Message);
+            return;
+        }
+        catch (TaskCanceledException tcEx) {
+            Console.WriteLine($"Request timeout or cancellation getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+            Console.WriteLine(tcEx.Message);
+            return;
+        }
+        catch (Exception ex) {
+            Console.WriteLine($"Error getting vendor {vendorInformation.VendorId}. URL: {client.BaseAddress}{url}");
+            Console.WriteLine(ex.Message);
+            return;
+        }
+
+        List<string> names = new List<string>();
+        if (response.AvailableMapSets != null) {
+            foreach (var item in response.AvailableMapSets) {
+                if (item != null && item.Name != null) {
+                    names.Add(item.Name);
+                }
+            }
+        }
+
+        // Safely set properties with null checks to avoid NullReferenceException
+        try {
             if (response.passwordPolicy != null) {
                 if (response.passwordPolicy.Source != null) {
                     vendorInformation.VendorPasswordPolicySourceId = response.passwordPolicy.Source.Id;
@@ -78,27 +121,49 @@ internal class VendorTasks {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Error processing distributor data for {vendorInformation.VendorId}: {ex.Message}");
+            Console.WriteLine($"Error processing vendor data for {vendorInformation.VendorId}: {ex.Message}");
         }
     }
 
     
     public static async Task PopulateVendorInformation(HttpClient httpClient, ApiInformation apiInformation, StatsContext db, DateTime reportDate, int counter = 0) {
-        var pageSize = 10;
-        Console.WriteLine($"Fetching vendors < {reportDate:s}");
-        List<VendorInformation> vendors = FetchUnprocessedVendors(db, pageSize, reportDate);
-        Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"fetching {vendors.Count} vendors to update"));
-        if (vendors.Any()) {
-            await Parallel.ForEachAsync(source: vendors, (vendor, cancellationToken) => GetVendorInformation(httpClient, apiInformation, vendor, cancellationToken));
-            await db.SaveChangesAsync();
+        try {
+            var pageSize = 10;
+            Console.WriteLine($"Fetching vendors < {reportDate:s}");
+            List<VendorInformation> vendors = FetchUnprocessedVendors(db, pageSize, reportDate);
+            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"fetching {vendors.Count} vendors to update"));
 
-            counter += vendors.Count;
+            if (vendors.Any()) {
+                try {
+                    await Parallel.ForEachAsync(source: vendors, (vendor, cancellationToken) =>
+                        GetVendorInformation(httpClient, apiInformation, vendor, cancellationToken));
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"Error during vendor information fetching: {ex.Message}");
+                    // Continue with saving what we have
+                }
 
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"checkpointed {pageSize} vendors"));
-            await PopulateVendorInformation(httpClient, apiInformation, db, reportDate, counter);
+                try {
+                    await db.SaveChangesAsync();
+                    counter += vendors.Count;
+                    Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation,
+                        $"checkpointed {vendors.Count} vendors"));
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"Error saving vendor information to database: {ex.Message}");
+                }
+
+                // Process the next batch
+                await PopulateVendorInformation(httpClient, apiInformation, db, reportDate, counter);
+            }
+            else {
+                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation,
+                    $"PopulateVendorInformation complete {counter} prepared vendors"));
+            }
         }
-        else {
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, null, null, null, null, apiInformation, $"PopulateVendorInformation complete {counter} prepared vendors"));
+        catch (Exception ex) {
+            Console.WriteLine($"Unhandled exception in PopulateVendorInformation: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
         }
     }
 }

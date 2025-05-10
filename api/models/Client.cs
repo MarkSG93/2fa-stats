@@ -12,7 +12,7 @@ public class Client {
 
     [JsonPropertyName("website")] public string Website { get; set; }
 
-    [JsonPropertyName("owner")] public Owner Owner { get; set; }
+    [JsonPropertyName("owner")] public Common.Owner Owner { get; set; }
 
     [JsonPropertyName("group")] public string Group { get; set; }
 
@@ -24,7 +24,7 @@ public class Client {
 
     [JsonPropertyName("counts")] public Counts Count { get; set; }
 
-    [JsonPropertyName("mapset")] public Models.AvailableMapSet Mapset { get; set; }
+    [JsonPropertyName("mapset")] public Common.AvailableMapSet Mapset { get; set; }
 
 
     public class Counts {

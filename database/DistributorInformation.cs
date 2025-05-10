@@ -15,9 +15,6 @@ public class DistributorInformation {
     [JsonPropertyName("distributor_type")] public string DistributorType { get; set; }
 
     // Nullable info
-    [JsonPropertyName("distributor_last_updated")]
-    public DateTime? LastUpdatedTimestamp { get; set; }
-    
     [JsonPropertyName("distributor_status")]
     public string? DistributorStatus { get; set; }
 

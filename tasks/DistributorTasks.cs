@@ -78,7 +78,6 @@ internal class DistributorTasks {
 
         // Safely set properties with null checks to avoid NullReferenceException
         try {
-            distributorInformation.LastUpdatedTimestamp = DateTime.UtcNow;
             if (response.passwordPolicy != null) {
                 if (response.passwordPolicy.Source != null) {
                     distributorInformation.DistributorPasswordPolicySourceId = response.passwordPolicy.Source.Id;
