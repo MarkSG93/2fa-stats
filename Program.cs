@@ -14,12 +14,11 @@ using Stats2fa.cache;
 using Stats2fa.database;
 using Stats2fa.logger;
 using Stats2fa.tasks;
-using Stats2fa.utils;
 
 namespace Stats2fa {
     class Program {
         private static ILogger _logger;
-        
+
         static async Task<int> Main(string[] args) {
             // Create the logger factory and logger
             using var loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole().SetMinimumLevel(LogLevel.Information); });
@@ -28,7 +27,6 @@ namespace Stats2fa {
             // Initialize PacketLogger with the logger
             StatsLogger.InitializeLogger(_logger);
 
-            
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
@@ -40,14 +38,14 @@ namespace Stats2fa {
             String apiKey = null, baseAddress = null, dbFileName = null, outputFileName = null;
 
             if (!string.IsNullOrEmpty(config["env"])) environment = config["env"];
-            Console.WriteLine($"date={config["date"]}");
+            _logger.LogInformation($"date={config["date"]}");
             if (string.IsNullOrEmpty(config["date"])) {
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, null, $"Warning: No date specified in arguments. Using current UTC date: {reportDate.ToString("yyyy-MM-dd")}"));
+                StatsLogger.Log(null, $"Warning: No date specified in arguments. Using current UTC date: {reportDate:yyyy-MM-dd}");
             }
             else {
                 reportDate = DateTime.ParseExact(config["date"], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
+                StatsLogger.Log(null, $"Date specified: {reportDate:yyyy-MM-dd}");
             }
-
 
             switch (environment) {
                 case "eu1":
@@ -81,25 +79,9 @@ namespace Stats2fa {
             // This is a platform-specific implementation detail of .NET Core on macOS.
             var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
 
-            // Delete existing database if exists and deleteDatabase parameter is set
-            if (!string.IsNullOrEmpty(config["deleteDatabase"]) && config["deleteDatabase"].Equals("true") && File.Exists(dbPath)) {
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, null, $"Deleting existing database at {dbPath}"));
-                File.Delete(dbPath);
-            }
-            
-            await using var db = new StatsContext(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
-
-            // Ensure database is created with current schema
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, null, $"ensuring database is created"));
-            await db.Database.EnsureCreatedAsync();
-
-            if (reportDate > DateTime.UtcNow) {
-                Console.WriteLine($"Deferring Execution Requested Date {reportDate} is still {(reportDate - DateTime.UtcNow).TotalHours:0000.00} hours in the future.");
-                return (int)ExitCode.TooEarly;
-            }
-
             var apiInformation = new ApiInformation {
                 LastUpdated = DateTime.UtcNow,
+                Environment = environment,
                 Distributors = 0,
                 Vendors = 0,
                 Clients = 0,
@@ -108,8 +90,26 @@ namespace Stats2fa {
                 ApiCallsClients = 0
             };
 
+            // Delete existing database if exists and deleteDatabase parameter is set
+            if (!string.IsNullOrEmpty(config["deleteDatabase"]) && config["deleteDatabase"].Equals("true") && File.Exists(dbPath)) {
+                StatsLogger.Log(apiInformation, $"Deleting existing database at {dbPath}");
+                File.Delete(dbPath);
+            }
+
+            await using var db = new StatsContext(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db");
+
+            // Ensure database is created with current schema
+            StatsLogger.Log(apiInformation, $"Ensuring database is created");
+            await db.Database.EnsureCreatedAsync();
+
+            if (reportDate > DateTime.UtcNow) {
+                StatsLogger.Log(apiInformation, $"Deferring Execution Requested Date {reportDate} is still {(reportDate - DateTime.UtcNow).TotalHours:0000.00} hours in the future.");
+                return (int)ExitCode.TooEarly;
+            }
+
+
             // Step 0 Setup HttpClient
-            Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"setting up http client"));
+            StatsLogger.Log(apiInformation, "Setting up HTTP client");
             var slidingWindowRateLimiterOptions = new SlidingWindowRateLimiterOptions {
                 Window = TimeSpan.FromSeconds(1),
                 SegmentsPerWindow = 1,
@@ -131,18 +131,18 @@ namespace Stats2fa {
 
             try {
                 // Step 1 Fetch the Distributors
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching distributors"));
+                StatsLogger.Log(apiInformation, "Fetching distributors");
                 Distributors distributors = await ApiUtils.GetDistributors(httpClient, apiInformation, null, Convert.ToInt32(config["ApiQueryLimits:DistributorLimit"]), Convert.ToInt32(config["ApiQueryLimits:DistributorMax"]));
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total distributors ({distributors.Count:00000})"));
+                StatsLogger.Log(apiInformation, $"Total distributors ({distributors.Count:00000})");
                 await Cache.SaveDistributors(db, distributors, reportDate);
 
                 if (distributors.DistributorList.Count == 0) {
-                    Console.WriteLine("No distributors found. Exiting.");
+                    StatsLogger.Log(apiInformation, "No distributors found. Exiting.");
                     return (int)ExitCode.Success;
                 }
 
                 // Step 2 Fetch the Vendors
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching vendors"));
+                StatsLogger.Log(apiInformation, "Fetching vendors");
                 ConcurrentBag<Vendor> allVendors = new ConcurrentBag<Vendor>();
                 try {
                     await Task.WhenAll(Parallel.ForEachAsync(source: distributors.DistributorList, (distributor, cancellationToken) =>
@@ -150,20 +150,20 @@ namespace Stats2fa {
                             Convert.ToInt32(config["ApiQueryLimits:VendorLimit"]), Convert.ToInt32(config["ApiQueryLimits:VendorMax"]))));
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error during vendor fetching: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error during vendor fetching: {ex.Message}");
                     // Continue with the vendors we were able to fetch
                 }
 
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total vendors ({allVendors.Count:00000})"));
+                StatsLogger.Log(apiInformation, $"Total vendors ({allVendors.Count:00000})");
                 await Cache.SaveVendors(db, allVendors, reportDate);
 
                 if (allVendors.Count == 0) {
-                    Console.WriteLine("No vendors found. Exiting.");
+                    StatsLogger.Log(apiInformation, "No vendors found. Exiting.");
                     return (int)ExitCode.Success;
                 }
 
                 // Step 3 Fetch the Clients
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching clients"));
+                StatsLogger.Log(apiInformation, "Fetching clients");
                 ConcurrentBag<Client> allClients = new ConcurrentBag<Client>();
                 try {
                     await Task.WhenAll(Parallel.ForEachAsync(source: allVendors, (vendor, cancellationToken) =>
@@ -171,32 +171,32 @@ namespace Stats2fa {
                             Convert.ToInt32(config["ApiQueryLimits:ClientLimit"]), Convert.ToInt32(config["ApiQueryLimits:ClientMax"]))));
                 }
                 catch (Exception ex) {
-                    Console.WriteLine($"Error during client fetching: {ex.Message}");
+                    StatsLogger.Log(apiInformation, $"Error during client fetching: {ex.Message}");
                     // Continue with the clients we were able to fetch
                 }
 
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"total clients ({allClients.Count:00000})"));
+                StatsLogger.Log(apiInformation, $"Total clients ({allClients.Count:00000})");
                 await Cache.SaveClients(db, allClients, reportDate);
 
                 // Step 4 Fetch the Distributor Information
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching distributor information"));
+                StatsLogger.Log(apiInformation, "Fetching distributor information");
                 await DistributorTasks.PopulateDistributorInformation(httpClient, apiInformation, db, reportDate);
 
                 // Step 5 Fetch the Vendor Information
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching vendor information"));
+                StatsLogger.Log(apiInformation, "Fetching vendor information");
                 await VendorTasks.PopulateVendorInformation(httpClient, apiInformation, db, reportDate);
 
                 // Step 6 Fetch the Client Information
-                Console.WriteLine("\n" + StringUtils.Log(DateTime.UtcNow, environment, null, null, null, apiInformation, $"fetching client information"));
+                StatsLogger.Log(apiInformation, "Fetching client information");
                 await ClientTasks.PopulateClientInformation(httpClient, apiInformation, db, reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
             }
             catch (Exception ex) {
-                Console.WriteLine($"Unhandled exception: {ex.Message}");
-                Console.WriteLine(ex.StackTrace);
+                StatsLogger.Log(apiInformation, $"Unhandled exception: {ex.Message}");
+                _logger.LogError(ex, "Unhandled exception in main execution flow");
                 return (int)ExitCode.UnknownError;
             }
 
-            Console.WriteLine("Stats2fa");
+            StatsLogger.Log(apiInformation, "Stats2fa completed successfully");
             return (int)ExitCode.Success;
         }
     }
