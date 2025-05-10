@@ -7,16 +7,28 @@ using System.Net.Http.Headers;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Stats2fa.api;
 using Stats2fa.api.models;
 using Stats2fa.cache;
 using Stats2fa.database;
+using Stats2fa.logger;
 using Stats2fa.tasks;
 using Stats2fa.utils;
 
 namespace Stats2fa {
     class Program {
+        private static ILogger _logger;
+        
         static async Task<int> Main(string[] args) {
+            // Create the logger factory and logger
+            using var loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole().SetMinimumLevel(LogLevel.Information); });
+            _logger = loggerFactory.CreateLogger<Program>(); // Assign logger to static field
+
+            // Initialize PacketLogger with the logger
+            StatsLogger.InitializeLogger(_logger);
+
+            
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()

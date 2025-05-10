@@ -3,9 +3,10 @@ using System.Text.Json.Serialization;
 
 namespace Stats2fa.api;
 
-internal class ApiInformation {
+public class ApiInformation {
     public int ApiInformationId { get; set; }
     [JsonPropertyName("api_date")] public DateTime LastUpdated { get; set; }
+    [JsonPropertyName("api_environment")] public string Environment { get; set; }
     [JsonPropertyName("api_distributors")] public int Distributors { get; set; }
     [JsonPropertyName("api_vendors")] public int Vendors { get; set; }
     [JsonPropertyName("api_clients")] public int Clients { get; set; }
