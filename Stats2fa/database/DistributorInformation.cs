@@ -64,7 +64,11 @@ public class DistributorInformation {
     public string? DistributorPasswordPolicyOtpSettingsMandatoryFor { get; set; }
 
     [JsonPropertyName("distributor_users")]
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public Users? DistributorUsers { get; set; }
+
+    [JsonPropertyName("distributor_stats_status")]
+    public string? DistributorStatsStatus { get; set; }
 
     public object this[string propertyName] {
         get {

@@ -7,8 +7,14 @@ using Stats2fa.logger;
 namespace Stats2fa.database;
 
 public class StatsContext : DbContext, IAsyncDisposable {
-    private readonly string _dbPath;
+    private readonly string? _dbPath;
 
+    // Constructor with DbContextOptions
+    public StatsContext(DbContextOptions<StatsContext> options) : base(options) {
+        // This constructor is used when options are provided directly
+    }
+
+    // Constructor that creates a SQLite database in a specified folder
     public StatsContext(string folderPath, string dbName, ApiInformation? apiInformation) {
         // Ensure the directory exists
         if (!Directory.Exists(path: folderPath)) {
@@ -21,14 +27,15 @@ public class StatsContext : DbContext, IAsyncDisposable {
     }
 
     // Define your DbSet properties here
-    // Example:
-    public DbSet<DistributorInformation> Distributors { get; set; }
-
-    public DbSet<VendorInformation> Vendors { get; set; }
-    public DbSet<ClientInformation> Clients { get; set; }
+    public DbSet<DistributorInformation> Distributors { get; set; } = null!;
+    public DbSet<VendorInformation> Vendors { get; set; } = null!;
+    public DbSet<ClientInformation> Clients { get; set; } = null!;
+    public DbSet<UserInformation> Users { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-        optionsBuilder.UseSqlite($"Data Source={_dbPath}");
+        if (!optionsBuilder.IsConfigured && !string.IsNullOrEmpty(_dbPath)) {
+            optionsBuilder.UseSqlite($"Data Source={_dbPath}");
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -58,9 +65,36 @@ public class StatsContext : DbContext, IAsyncDisposable {
             .Property(c => c.ClientInformationId)
             .ValueGeneratedOnAdd();
 
+        // Configure UserInformation entity
+        modelBuilder.Entity<UserInformation>()
+            .HasKey(u => u.UserInformationId);
+
+        modelBuilder.Entity<UserInformation>()
+            .Property(u => u.UserInformationId)
+            .ValueGeneratedOnAdd();
+
+        // Set a different table name for UserInformation to avoid conflict with Users
+        modelBuilder.Entity<UserInformation>()
+            .ToTable("UserInformationTable");
+
         // Ignore the nested classes/complex types to prevent EF from treating them as entities
         modelBuilder.Entity<ClientInformation>()
             .Ignore(c => c.ClientUsers);
+
+        modelBuilder.Entity<UserInformation>()
+            .Ignore(u => u.UserData);
+
+        // Explicitly ignore UserCostCentre when EF tries to map it as an entity
+        // This should prevent EF from trying to map complex types inside User classes
+        modelBuilder.Ignore<Stats2fa.api.models.User.UserCostCentre>();
+
+        // Mark Users as a keyless entity type - it's just a response container
+        modelBuilder.Entity<Stats2fa.api.models.Users>().HasNoKey();
+
+        // Mark response models as keyless entities when they're being tracked
+        modelBuilder.Entity<Stats2fa.api.models.User>().HasNoKey();
+        modelBuilder.Entity<Stats2fa.api.models.User.UserDefaultClient>().HasNoKey();
+        modelBuilder.Entity<Stats2fa.api.models.Common.Owner>().HasNoKey();
     }
 
     public static Guid Int2Guid(int value) {
