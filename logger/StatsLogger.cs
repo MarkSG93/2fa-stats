@@ -32,11 +32,11 @@ public class StatsLogger {
     }
 
     public static void Log(ApiInformation? stats, string message, string? environment = null, string? distributor = null, string? vendor = null, string? client = null) {
-        StringBuilder logEntry = new StringBuilder($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} | ");
+        var logEntry = new StringBuilder($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} | ");
 
         // Handle null ApiInformation
         if (stats != null) {
-            int totalCalls = stats.ApiCallsDistributors + stats.ApiCallsVendors + stats.ApiCallsClients;
+            var totalCalls = stats.ApiCallsDistributors + stats.ApiCallsVendors + stats.ApiCallsClients;
             logEntry.Append($"ApiCall: {totalCalls:000000} calls | ");
         }
         else {
@@ -44,17 +44,15 @@ public class StatsLogger {
         }
 
         // Environment can come from stats or as a parameter
-        string envValue = "";
+        var envValue = "";
         if (stats != null && stats.Environment != null) {
             envValue = stats.Environment;
         }
         else {
-            if (environment != null) {
+            if (environment != null)
                 envValue = environment;
-            }
-            else {
+            else
                 envValue = "unknown";
-            }
         }
 
         logEntry.Append($"Environment: {envValue} | ");
@@ -67,19 +65,17 @@ public class StatsLogger {
 
         // Log to the logger if available
 
-        if (_logger != null) {
+        if (_logger != null)
             _logger.LogInformation(logEntry.ToString());
-            // log to structured logger if defined
-            // if (stats != null) {
-            //     _logStatsDetails(_logger, message, null);
-            // }
-            // else {
-            //     _logger.LogInformation(logEntry.ToString());
-            // }
-        }
-        else {
+        // log to structured logger if defined
+        // if (stats != null) {
+        //     _logStatsDetails(_logger, message, null);
+        // }
+        // else {
+        //     _logger.LogInformation(logEntry.ToString());
+        // }
+        else
             // If the logger isn't initialized, log to console (for debugging)
             Console.WriteLine(logEntry.ToString());
-        }
     }
 }

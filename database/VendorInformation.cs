@@ -1,23 +1,29 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Text.Json.Serialization;
 
 namespace Stats2fa.database;
 
 public class VendorInformation {
-    public Int64 VendorInformationId { get; set; }
+    public long VendorInformationId { get; set; }
 
     // Non nullable info
-    [JsonPropertyName("vendor_date")] public DateTime CreatedTimestamp { get; set; }
+    [JsonPropertyName("vendor_date")]
+    public DateTime CreatedTimestamp { get; set; }
 
     [JsonPropertyName("vendor_distributor_id")]
     public string VendorDistributorId { get; set; }
 
-    [JsonPropertyName("vendor_id")] public string VendorId { get; set; }
-    [JsonPropertyName("vendor_name")] public string VendorName { get; set; }
-    [JsonPropertyName("vendor_type")] public string VendorType { get; set; }
-    [JsonPropertyName("vendor_status")] public string VendorStatus { get; set; }
+    [JsonPropertyName("vendor_id")]
+    public string VendorId { get; set; }
+
+    [JsonPropertyName("vendor_name")]
+    public string VendorName { get; set; }
+
+    [JsonPropertyName("vendor_type")]
+    public string VendorType { get; set; }
+
+    [JsonPropertyName("vendor_status")]
+    public string VendorStatus { get; set; }
 
     // Nullable info
     [JsonPropertyName("vendor_passwordPolicy_source_id")]
@@ -58,19 +64,17 @@ public class VendorInformation {
 
     [JsonPropertyName("vendor_passwordPolicy_otpSettings_mandatoryFor")]
     public string? VendorPasswordPolicyOtpSettingsMandatoryFor { get; set; }
-    public object this[string propertyName]
-    {
-        get
-        {
-            Type myType = typeof(VendorInformation);
-            PropertyInfo myPropInfo = myType.GetProperty(propertyName);
+
+    public object this[string propertyName] {
+        get {
+            var myType = typeof(VendorInformation);
+            var myPropInfo = myType.GetProperty(name: propertyName);
             return myPropInfo.GetValue(this, null);
         }
-        set
-        {
-            Type myType = typeof(VendorInformation);
-            PropertyInfo myPropInfo = myType.GetProperty(propertyName);
-            myPropInfo.SetValue(this, value, null);
+        set {
+            var myType = typeof(VendorInformation);
+            var myPropInfo = myType.GetProperty(name: propertyName);
+            myPropInfo.SetValue(this, value: value, null);
         }
     }
 }

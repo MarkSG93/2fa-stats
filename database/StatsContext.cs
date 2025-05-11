@@ -4,74 +4,78 @@ using Microsoft.EntityFrameworkCore;
 using Stats2fa.api;
 using Stats2fa.logger;
 
-namespace Stats2fa.database {
-    public class StatsContext : DbContext, IAsyncDisposable {
-        private readonly string _dbPath;
+namespace Stats2fa.database;
 
-        public StatsContext(string folderPath, string dbName, ApiInformation? apiInformation) {
-            // Ensure the directory exists
-            if (!Directory.Exists(folderPath)) {
-                StatsLogger.Log(apiInformation, $"Creating directory {folderPath}");
-                Directory.CreateDirectory(folderPath);
-            }
+public class StatsContext : DbContext, IAsyncDisposable {
+    private readonly string _dbPath;
 
-            _dbPath = Path.Combine(folderPath, dbName);
-            StatsLogger.Log(apiInformation, $"DB Path {_dbPath}");
+    public StatsContext(string folderPath, string dbName, ApiInformation? apiInformation) {
+        // Ensure the directory exists
+        if (!Directory.Exists(path: folderPath)) {
+            StatsLogger.Log(stats: apiInformation, $"Creating directory {folderPath}");
+            Directory.CreateDirectory(path: folderPath);
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-            optionsBuilder.UseSqlite($"Data Source={_dbPath}");
-        }
+        _dbPath = Path.Combine(path1: folderPath, path2: dbName);
+        StatsLogger.Log(stats: apiInformation, $"DB Path {_dbPath}");
+    }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) {
-            base.OnModelCreating(modelBuilder);
+    // Define your DbSet properties here
+    // Example:
+    public DbSet<DistributorInformation> Distributors { get; set; }
 
-            // Configure DistributorInformation entity
-            modelBuilder.Entity<DistributorInformation>()
-                .HasKey(d => d.DistributorInformationId);
+    public DbSet<VendorInformation> Vendors { get; set; }
+    public DbSet<ClientInformation> Clients { get; set; }
 
-            modelBuilder.Entity<DistributorInformation>()
-                .Property(d => d.DistributorInformationId)
-                .ValueGeneratedOnAdd();
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+        optionsBuilder.UseSqlite($"Data Source={_dbPath}");
+    }
 
-            // Configure VendorInformation entity
-            modelBuilder.Entity<VendorInformation>()
-                .HasKey(v => v.VendorInformationId);
+    protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        base.OnModelCreating(modelBuilder: modelBuilder);
 
-            modelBuilder.Entity<VendorInformation>()
-                .Property(v => v.VendorInformationId)
-                .ValueGeneratedOnAdd();
+        // Configure DistributorInformation entity
+        modelBuilder.Entity<DistributorInformation>()
+            .HasKey(d => d.DistributorInformationId);
 
-            // Configure ClientInformation entity
-            modelBuilder.Entity<ClientInformation>()
-                .HasKey(c => c.ClientInformationId);
+        modelBuilder.Entity<DistributorInformation>()
+            .Property(d => d.DistributorInformationId)
+            .ValueGeneratedOnAdd();
 
-            modelBuilder.Entity<ClientInformation>()
-                .Property(c => c.ClientInformationId)
-                .ValueGeneratedOnAdd();
-        }
+        // Configure VendorInformation entity
+        modelBuilder.Entity<VendorInformation>()
+            .HasKey(v => v.VendorInformationId);
 
-        // Define your DbSet properties here
-        // Example:
-        public DbSet<DistributorInformation> Distributors { get; set; }
+        modelBuilder.Entity<VendorInformation>()
+            .Property(v => v.VendorInformationId)
+            .ValueGeneratedOnAdd();
 
-        public DbSet<VendorInformation> Vendors { get; set; }
-        public DbSet<ClientInformation> Clients { get; set; }
+        // Configure ClientInformation entity
+        modelBuilder.Entity<ClientInformation>()
+            .HasKey(c => c.ClientInformationId);
 
-        public static Guid Int2Guid(int value) {
-            byte[] bytes = new byte[16];
-            BitConverter.GetBytes(value).CopyTo(bytes, 0);
-            return new Guid(bytes);
-        }
+        modelBuilder.Entity<ClientInformation>()
+            .Property(c => c.ClientInformationId)
+            .ValueGeneratedOnAdd();
 
-        public static Int64 Guid2Int(Guid value) {
-            byte[] b = value.ToByteArray();
-            Int64 bint = BitConverter.ToInt64(b, 0);
-            return bint;
-        }
+        // Ignore the nested classes/complex types to prevent EF from treating them as entities
+        modelBuilder.Entity<ClientInformation>()
+            .Ignore(c => c.ClientUsers);
+    }
 
-        public static Int64 Guid2Int(string value) {
-            return Guid2Int(new Guid(value));
-        }
+    public static Guid Int2Guid(int value) {
+        var bytes = new byte[16];
+        BitConverter.GetBytes(value: value).CopyTo(array: bytes, 0);
+        return new Guid(b: bytes);
+    }
+
+    public static long Guid2Int(Guid value) {
+        var b = value.ToByteArray();
+        var bint = BitConverter.ToInt64(value: b, 0);
+        return bint;
+    }
+
+    public static long Guid2Int(string value) {
+        return Guid2Int(new Guid(g: value));
     }
 }
