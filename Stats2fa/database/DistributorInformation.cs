@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using Stats2fa.api.models;
 
 namespace Stats2fa.database;
 
@@ -61,6 +62,9 @@ public class DistributorInformation {
 
     [JsonPropertyName("distributor_passwordPolicy_otpSettings_mandatoryFor")]
     public string? DistributorPasswordPolicyOtpSettingsMandatoryFor { get; set; }
+
+    [JsonPropertyName("distributor_users")]
+    public Users? DistributorUsers { get; set; }
 
     public object this[string propertyName] {
         get {

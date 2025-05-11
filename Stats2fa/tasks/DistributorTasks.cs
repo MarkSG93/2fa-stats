@@ -25,13 +25,24 @@ internal class DistributorTasks {
     }
 
     private static async ValueTask GetDistributorInformation(HttpClient httpClient, ApiInformation apiInformation,
-        DistributorInformation distributor, object o, CancellationToken cancellationToken) {
+        DistributorInformation distributor, CancellationToken cancellationToken) {
         var tasks = new List<Task> {
-            GetDistributorInformationAndSettings(client: httpClient, apiInformation: apiInformation, distributorInformation: distributor)
-            // GetDistributorStats(httpClient, apiInformation, distributor)
+            GetDistributorInformationAndSettings(client: httpClient, apiInformation: apiInformation, distributorInformation: distributor),
+            GetDistributorUsers(httpClient: httpClient, apiInformation: apiInformation, distributorInformation: distributor, cancellationToken: cancellationToken)
         };
         await Task.WhenAll(tasks: tasks);
         distributor.CreatedTimestamp = DateTime.UtcNow; // update the CreatedTimestamp now we have all the info
+    }
+
+    private static async Task GetDistributorUsers(HttpClient httpClient, ApiInformation apiInformation, DistributorInformation distributorInformation, CancellationToken cancellationToken) {
+        // TODO Complete the code, like in ClientTasks.cs GetClientUsers
+        var url = $"accounts/users?owner={distributorInformation.DistributorId}&offset=0&limit={10000}&sort=name:asc&filter=(state=inactive|state=active|state=suspended)";
+        Users? response;
+        var httpResponse = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+        // Read as JSON
+        response = await httpResponse.Content.ReadFromJsonAsync<Users>(cancellationToken: cancellationToken);
+        
+        if (response != null) distributorInformation.DistributorUsers = response;
     }
 
     private static async Task GetDistributorInformationAndSettings(HttpClient client, ApiInformation apiInformation, DistributorInformation distributorInformation) {
@@ -127,7 +138,7 @@ internal class DistributorTasks {
                 try {
                     await Parallel.ForEachAsync(source: distributors,
                         (distributor, cancellationToken) =>
-                            GetDistributorInformation(httpClient: httpClient, apiInformation: apiInformation, distributor: distributor, null, cancellationToken: cancellationToken));
+                            GetDistributorInformation(httpClient: httpClient, apiInformation: apiInformation, distributor: distributor, cancellationToken: cancellationToken));
                 }
                 catch (Exception ex) {
                     StatsLogger.Log(stats: apiInformation, $"Error during distributor information fetching: {ex.Message}");
