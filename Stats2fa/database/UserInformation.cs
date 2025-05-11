@@ -16,6 +16,21 @@ public class UserInformation {
 
     [JsonPropertyName("user_email")]
     public string UserEmail { get; set; } = string.Empty;
+    
+    [JsonPropertyName("user_owner_id")]
+    public string UserOwnerId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("user_owner_name")]
+    public string UserOwnerName { get; set; } = string.Empty;
+    
+    [JsonPropertyName("user_owner_type")]
+    public string UserOwnerType { get; set; } = string.Empty;
+    
+    [JsonPropertyName("user_defaultClient")]
+    public string UserDefaultClient { get; set; } = string.Empty;
+    
+    [JsonPropertyName("user_defaultClient_name")]
+    public string UserDefaultClientName { get; set; } = string.Empty;
 
     // Nullable info
     [JsonPropertyName("user_mobile")]

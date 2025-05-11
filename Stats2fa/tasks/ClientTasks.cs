@@ -193,7 +193,7 @@ internal class ClientTasks {
         }
     }
 
-    private static async Task GetClientUsers(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken) {
+    private static async Task GetClientUsers(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, UserInformation userInformation, CancellationToken cancellationToken) {
         apiInformation.ApiCallsClients++;
         apiInformation.LastUpdated = DateTime.UtcNow;
 
@@ -251,13 +251,23 @@ internal class ClientTasks {
 
         // Safely set properties with null checks to avoid NullReferenceException
         try {
-            if (response != null) clientInformation.ClientUsers = response;
-
+            // TODO save the response to the UserInformation table
+            SaveUsers(userInformation, response);
             clientInformation.ClientStatsStatus = "SUCCESS";
         }
         catch (Exception ex) {
             StatsLogger.Log(stats: apiInformation, $"Error processing user list for {clientInformation.ClientId}: {ex.Message}", client: clientInformation.ClientId);
         }
+    }
+
+    private static void SaveUsers(UserInformation userInformation, Users? response) {
+       if (response == null) return;
+       if (!response.UserList.Any())return;
+       foreach (var user in response.UserList) {
+           userInformation.UserId = user.Id;
+           // TODO save all the other information to the userInformation
+       }
+        
     }
 
     private static async Task GetClientInformationAndSettings(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken = default) {
