@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Stats2fa.api.models;
@@ -7,7 +8,7 @@ public class User {
     public string Id { get; set; }
 
     [JsonPropertyName("owner")]
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    [NotMapped]
     public Common.Owner? Owner { get; set; }
 
     [JsonPropertyName("name")]
@@ -29,11 +30,11 @@ public class User {
     public string? State { get; set; }
 
     [JsonPropertyName("defaultClient")]
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    [NotMapped]
     public UserDefaultClient? DefaultClient { get; set; }
 
     [JsonPropertyName("costCentre")]
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    [NotMapped]
     public UserCostCentre? CostCentre { get; set; }
 
     [JsonPropertyName("modifiedDate")]
@@ -55,7 +56,7 @@ public class User {
         public string? Name { get; set; }
 
         [JsonPropertyName("err")]
-        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+        [NotMapped]
         public ErrorDetails? Error { get; set; }
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Stats2fa.api;
+using Stats2fa.api.models;
 using Stats2fa.logger;
 
 namespace Stats2fa.database;
@@ -10,7 +11,7 @@ public class StatsContext : DbContext, IAsyncDisposable {
     private readonly string? _dbPath;
 
     // Constructor with DbContextOptions
-    public StatsContext(DbContextOptions<StatsContext> options) : base(options) {
+    public StatsContext(DbContextOptions<StatsContext> options) : base(options: options) {
         // This constructor is used when options are provided directly
     }
 
@@ -33,9 +34,7 @@ public class StatsContext : DbContext, IAsyncDisposable {
     public DbSet<UserInformation> Users { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-        if (!optionsBuilder.IsConfigured && !string.IsNullOrEmpty(_dbPath)) {
-            optionsBuilder.UseSqlite($"Data Source={_dbPath}");
-        }
+        if (!optionsBuilder.IsConfigured && !string.IsNullOrEmpty(value: _dbPath)) optionsBuilder.UseSqlite($"Data Source={_dbPath}");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -65,17 +64,24 @@ public class StatsContext : DbContext, IAsyncDisposable {
             .Property(c => c.ClientInformationId)
             .ValueGeneratedOnAdd();
 
-        // Configure UserInformation entity
+        // Configure User entity
         modelBuilder.Entity<UserInformation>()
-            .HasKey(u => u.UserInformationId);
+            .HasKey(u => u.UserId);
 
         modelBuilder.Entity<UserInformation>()
-            .Property(u => u.UserInformationId)
+            .Property(u => u.UserId)
             .ValueGeneratedOnAdd();
 
-        // Set a different table name for UserInformation to avoid conflict with Users
+        // Set table name for User entity
         modelBuilder.Entity<UserInformation>()
-            .ToTable("UserInformationTable");
+            .ToTable("AppUsers");
+
+        // Define relationship between User and ClientInformation
+        modelBuilder.Entity<UserInformation>()
+            .HasOne(u => u.Client)
+            .WithMany()
+            .HasForeignKey(u => u.ClientInformationId)
+            .IsRequired(false);
 
         // Ignore the nested classes/complex types to prevent EF from treating them as entities
         modelBuilder.Entity<ClientInformation>()
@@ -86,15 +92,15 @@ public class StatsContext : DbContext, IAsyncDisposable {
 
         // Explicitly ignore UserCostCentre when EF tries to map it as an entity
         // This should prevent EF from trying to map complex types inside User classes
-        modelBuilder.Ignore<Stats2fa.api.models.User.UserCostCentre>();
+        modelBuilder.Ignore<User.UserCostCentre>();
 
         // Mark Users as a keyless entity type - it's just a response container
-        modelBuilder.Entity<Stats2fa.api.models.Users>().HasNoKey();
+        modelBuilder.Entity<Users>().HasNoKey();
 
         // Mark response models as keyless entities when they're being tracked
-        modelBuilder.Entity<Stats2fa.api.models.User>().HasNoKey();
-        modelBuilder.Entity<Stats2fa.api.models.User.UserDefaultClient>().HasNoKey();
-        modelBuilder.Entity<Stats2fa.api.models.Common.Owner>().HasNoKey();
+        modelBuilder.Entity<User>().HasNoKey();
+        modelBuilder.Entity<User.UserDefaultClient>().HasNoKey();
+        modelBuilder.Entity<Common.Owner>().HasNoKey();
     }
 
     public static Guid Int2Guid(int value) {

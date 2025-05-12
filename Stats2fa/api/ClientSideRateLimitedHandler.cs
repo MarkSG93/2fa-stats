@@ -18,7 +18,7 @@ public class ClientSideRateLimitedHandler : DelegatingHandler {
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken) {
-        using var lease = await _limiter.AcquireAsync(1, cancellationToken: cancellationToken);
+        using var lease = await _limiter.AcquireAsync(cancellationToken: cancellationToken);
 
         if (lease.IsAcquired) return await base.SendAsync(request: request, cancellationToken: cancellationToken);
 

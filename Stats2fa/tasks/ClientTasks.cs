@@ -193,7 +193,7 @@ internal class ClientTasks {
         }
     }
 
-    private static async Task GetClientUsers(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, UserInformation userInformation, CancellationToken cancellationToken) {
+    private static async Task GetClientUsers(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken) {
         apiInformation.ApiCallsClients++;
         apiInformation.LastUpdated = DateTime.UtcNow;
 
@@ -251,8 +251,15 @@ internal class ClientTasks {
 
         // Safely set properties with null checks to avoid NullReferenceException
         try {
-            // TODO save the response to the UserInformation table
-            SaveUsers(userInformation, response);
+            // Store the user response in the client
+            clientInformation.ClientUsers = response;
+
+            // Process and save users to the UserInformation table
+            if (response != null && response.UserList != null && response.UserList.Any()) {
+                SaveUsers(apiInformation: apiInformation, clientInformation: clientInformation, response: response);
+                StatsLogger.Log(stats: apiInformation, $"Saved {response.UserList.Count} users for client {clientInformation.ClientId}", client: clientInformation.ClientId);
+            }
+
             clientInformation.ClientStatsStatus = "SUCCESS";
         }
         catch (Exception ex) {
@@ -260,14 +267,53 @@ internal class ClientTasks {
         }
     }
 
-    private static void SaveUsers(UserInformation userInformation, Users? response) {
-       if (response == null) return;
-       if (!response.UserList.Any())return;
-       foreach (var user in response.UserList) {
-           userInformation.UserId = user.Id;
-           // TODO save all the other information to the userInformation
-       }
-        
+    private static List<UserInformation> SaveUsers(ApiInformation apiInformation, ClientInformation clientInformation, Users? response) {
+        var userList = new List<UserInformation>();
+
+        if (response == null || response.UserList == null || !response.UserList.Any())
+            return userList;
+
+        foreach (var apiUser in response.UserList)
+            try {
+                // Create a User entity
+                var user = new UserInformation {
+                    ApiUserId = apiUser.Id,
+                    Name = apiUser.Name ?? string.Empty,
+                    Email = apiUser.EmailAddress ?? string.Empty,
+                    Mobile = apiUser.Mobile,
+                    TimeZone = apiUser.TimeZoneId,
+                    Language = apiUser.Language,
+                    State = apiUser.State,
+                    ModifiedDate = apiUser.ModifiedDate,
+                    CreatedTimestamp = DateTime.UtcNow,
+                    ClientId = clientInformation.ClientId, // Link to the client
+                    ClientInformationId = clientInformation.ClientInformationId // Link to ClientInformation entity
+                };
+
+                // Set owner information if available
+                if (apiUser.Owner != null) {
+                    user.OwnerId = apiUser.Owner.Id ?? string.Empty;
+                    user.OwnerName = apiUser.Owner.Name ?? string.Empty;
+                    // Common.Owner doesn't have a Type property, leave it empty for now
+                    user.OwnerType = string.Empty;
+                }
+
+                // Set default client information if available
+                if (apiUser.DefaultClient != null) {
+                    user.DefaultClientId = apiUser.DefaultClient.Id ?? string.Empty;
+                    user.DefaultClientName = apiUser.DefaultClient.Name ?? string.Empty;
+                }
+
+                // Add user to the database context
+                apiInformation.StatsContext?.Users.Add(entity: user);
+                userList.Add(item: user);
+                // UserInformation class has been merged with User class, no need for separate record
+            }
+            catch (Exception ex) {
+                StatsLogger.Log(stats: apiInformation, $"Error saving user {apiUser.Id}: {ex.Message}", client: clientInformation.ClientId);
+            }
+
+        return userList;
     }
 
     private static async Task GetClientInformationAndSettings(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken = default) {
@@ -290,7 +336,7 @@ internal class ClientTasks {
             // Check content type to ensure it's JSON
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
-                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
+                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for client. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
 
                 // For debugging: try to read the content as string to see what's being returned
                 if (contentType?.Contains("text/html") == true)

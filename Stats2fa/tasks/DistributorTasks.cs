@@ -123,7 +123,7 @@ internal class DistributorTasks {
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
                 distributorInformation.DistributorStatsStatus = "ERROR_CONTENT_TYPE";
-                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor {distributorInformation.DistributorId}. URL: {client.BaseAddress}{url}");
+                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor. URL: {client.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
                 return;
             }
 

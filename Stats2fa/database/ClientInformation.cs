@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Stats2fa.api.models;
 
@@ -70,7 +71,7 @@ public class ClientInformation {
     public string? ClientPasswordPolicyOtpSettingsMandatoryFor { get; set; }
 
     [JsonPropertyName("client_users")]
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    [NotMapped]
     public Users? ClientUsers { get; set; }
 
     public object this[string propertyName] {

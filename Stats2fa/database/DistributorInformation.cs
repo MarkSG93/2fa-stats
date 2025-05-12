@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Stats2fa.api.models;
 
@@ -64,7 +65,7 @@ public class DistributorInformation {
     public string? DistributorPasswordPolicyOtpSettingsMandatoryFor { get; set; }
 
     [JsonPropertyName("distributor_users")]
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    [NotMapped]
     public Users? DistributorUsers { get; set; }
 
     [JsonPropertyName("distributor_stats_status")]

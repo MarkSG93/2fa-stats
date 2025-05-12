@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using Stats2fa.database;
 
 namespace Stats2fa.api;
 
@@ -29,4 +30,7 @@ public class ApiInformation {
 
     [JsonPropertyName("api_calls_clients")]
     public int ApiCallsClients { get; set; }
+
+    [JsonIgnore]
+    public StatsContext? StatsContext { get; set; }
 }

@@ -101,6 +101,9 @@ internal class Program {
 
         await using var db = new StatsContext(Environment.GetFolderPath(folder: Environment.SpecialFolder.MyDocuments), $"{dbFileName}.db", apiInformation: apiInformation);
 
+        // Set the StatsContext reference in ApiInformation for user data saving
+        apiInformation.StatsContext = db;
+
         // Ensure database is created with current schema
         StatsLogger.Log(stats: apiInformation, "Ensuring database is created");
         await db.Database.EnsureCreatedAsync();

@@ -103,7 +103,7 @@ internal class ApiUtils {
             // Check content type to ensure it's JSON
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
-                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor {distributor.Id}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor. URL: {httpClient.BaseAddress}{url}", distributor: distributor.Id);
 
                 // Just return the current vendors without throwing an exception
                 if (vendors.VendorList.Count > 0)
@@ -204,7 +204,7 @@ internal class ApiUtils {
             // Check content type to ensure it's JSON
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
-                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for vendor {vendor.Id}. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for vendor. URL: {httpClient.BaseAddress}{url}", vendor: vendor.Id);
 
                 // Just return the current clients without throwing an exception
                 if (clients.ClientList.Count > 0)
