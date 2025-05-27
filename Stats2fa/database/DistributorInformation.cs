@@ -70,7 +70,7 @@ public class DistributorInformation {
 
     [JsonPropertyName("distributor_stats_status")]
     public string? DistributorStatsStatus { get; set; }
-
+    
     public object this[string propertyName] {
         get {
             var myType = typeof(DistributorInformation);

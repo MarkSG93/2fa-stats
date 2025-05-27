@@ -28,7 +28,7 @@ internal class DistributorTasks {
         DistributorInformation distributor, CancellationToken cancellationToken) {
         var tasks = new List<Task> {
             GetDistributorInformationAndSettings(client: httpClient, apiInformation: apiInformation, distributorInformation: distributor),
-            GetDistributorUsers(httpClient: httpClient, apiInformation: apiInformation, distributorInformation: distributor, cancellationToken: cancellationToken)
+            // GetDistributorUsers(httpClient: httpClient, apiInformation: apiInformation, distributorInformation: distributor, cancellationToken: cancellationToken)
         };
         await Task.WhenAll(tasks: tasks);
         distributor.CreatedTimestamp = DateTime.UtcNow; // update the CreatedTimestamp now we have all the info

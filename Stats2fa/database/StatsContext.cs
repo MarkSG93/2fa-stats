@@ -90,17 +90,21 @@ public class StatsContext : DbContext, IAsyncDisposable {
         modelBuilder.Entity<UserInformation>()
             .Ignore(u => u.UserData);
 
-        // Explicitly ignore UserCostCentre when EF tries to map it as an entity
-        // This should prevent EF from trying to map complex types inside User classes
+        // Explicitly ignore API model types that shouldn't be mapped to tables
         modelBuilder.Ignore<User.UserCostCentre>();
+        modelBuilder.Ignore<User.UserDefaultClient>();
+        // Can't use Ignore<T> with struct types like ErrorDetails
+        modelBuilder.Ignore<Common.Owner>();
+        modelBuilder.Ignore<Common.Source>();
+        modelBuilder.Ignore<Common.PasswordComplexity>();
+        modelBuilder.Ignore<Common.OtpSettings>();
+        modelBuilder.Ignore<Common.OtpMethods>();
+        modelBuilder.Ignore<Common.TokenValidity>();
 
-        // Mark Users as a keyless entity type - it's just a response container
+        // Mark API response models as keyless entity types
+        // These are just response containers, not actual database entities
         modelBuilder.Entity<Users>().HasNoKey();
-
-        // Mark response models as keyless entities when they're being tracked
         modelBuilder.Entity<User>().HasNoKey();
-        modelBuilder.Entity<User.UserDefaultClient>().HasNoKey();
-        modelBuilder.Entity<Common.Owner>().HasNoKey();
     }
 
     public static Guid Int2Guid(int value) {

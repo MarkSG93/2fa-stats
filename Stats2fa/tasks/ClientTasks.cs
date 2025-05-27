@@ -98,7 +98,6 @@ internal class ClientTasks {
         }
     }
 
-    // Separate method for corrupted clients to improve code structure
     private static async Task ProcessCorruptedClients(HttpClient httpClient, ApiInformation apiInformation, StatsContext db, DateTime reportDate, int maxClients, int counter, int recursionDepth = 0) {
         const int MaxRecursionDepth = 100;
         if (recursionDepth > MaxRecursionDepth) {
@@ -174,7 +173,7 @@ internal class ClientTasks {
 
             var tasks = new List<Task> {
                 GetClientInformationAndSettings(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: timeoutCts.Token),
-                GetClientUsers(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: timeoutCts.Token)
+                // GetClientUsers(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: timeoutCts.Token)
             };
 
             await Task.WhenAll(tasks: tasks);
@@ -276,6 +275,7 @@ internal class ClientTasks {
         foreach (var apiUser in response.UserList)
             try {
                 // Create a User entity
+                Console.WriteLine($"Creating User entity for {apiUser.Id}");
                 var user = new UserInformation {
                     ApiUserId = apiUser.Id,
                     Name = apiUser.Name ?? string.Empty,
@@ -305,7 +305,9 @@ internal class ClientTasks {
                 }
 
                 // Add user to the database context
+                Console.WriteLine($"Add user to the database context {apiUser.Id}");
                 apiInformation.StatsContext?.Users.Add(entity: user);
+                Console.WriteLine($"Add user to the userList {apiUser.Id}");
                 userList.Add(item: user);
                 // UserInformation class has been merged with User class, no need for separate record
             }

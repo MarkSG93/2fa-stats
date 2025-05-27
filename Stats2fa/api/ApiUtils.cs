@@ -21,9 +21,9 @@ internal class ApiUtils {
         };
         apiInformation.ApiCallsDistributors++;
         apiInformation.LastUpdated = DateTime.UtcNow;
+        Distributors response;
 
         var url = $"accounts/distributors?owner=00000000-0000-0000-0000-000000000000&offset={distributors.DistributorList.Count}&limit={limit}&sort=name&filter=state!=deleted";
-        Distributors response;
 
         try {
             // Use GetAsync instead of GetFromJsonAsync for more control over response handling
@@ -80,9 +80,9 @@ internal class ApiUtils {
         };
         apiInformation.ApiCallsVendors++;
         apiInformation.LastUpdated = DateTime.UtcNow;
+        Vendors response;
 
         var url = $"accounts/vendors?owner={distributor.Id}&offset={vendors.VendorList.Count}&limit={limit}&sort=name&filter=state!=deleted";
-        Vendors response;
 
         try {
             // Use GetAsync instead of GetFromJsonAsync for more control over response handling

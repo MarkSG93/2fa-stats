@@ -1,5 +1,7 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using Stats2fa.api.models;
 
 namespace Stats2fa.database;
 
@@ -64,7 +66,14 @@ public class VendorInformation {
 
     [JsonPropertyName("vendor_passwordPolicy_otpSettings_mandatoryFor")]
     public string? VendorPasswordPolicyOtpSettingsMandatoryFor { get; set; }
-
+    
+    [JsonPropertyName("vendor_users")]
+    [NotMapped]
+    public Users? VendorUsers { get; set; }
+    
+    [JsonPropertyName("vendor_stats_status")]
+    public string? VendorStatsStatus { get; set; }
+    
     public object this[string propertyName] {
         get {
             var myType = typeof(VendorInformation);
