@@ -69,11 +69,7 @@ public class ClientInformation {
 
     [JsonPropertyName("client_passwordPolicy_otpSettings_mandatoryFor")]
     public string? ClientPasswordPolicyOtpSettingsMandatoryFor { get; set; }
-
-    [JsonPropertyName("client_users")]
-    [NotMapped]
-    public Users? ClientUsers { get; set; }
-
+    
     public object this[string propertyName] {
         get {
             var myType = typeof(ClientInformation);

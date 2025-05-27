@@ -64,10 +64,6 @@ public class DistributorInformation {
     [JsonPropertyName("distributor_passwordPolicy_otpSettings_mandatoryFor")]
     public string? DistributorPasswordPolicyOtpSettingsMandatoryFor { get; set; }
 
-    [JsonPropertyName("distributor_users")]
-    [NotMapped]
-    public Users? DistributorUsers { get; set; }
-
     [JsonPropertyName("distributor_stats_status")]
     public string? DistributorStatsStatus { get; set; }
     

@@ -67,10 +67,6 @@ public class VendorInformation {
     [JsonPropertyName("vendor_passwordPolicy_otpSettings_mandatoryFor")]
     public string? VendorPasswordPolicyOtpSettingsMandatoryFor { get; set; }
     
-    [JsonPropertyName("vendor_users")]
-    [NotMapped]
-    public Users? VendorUsers { get; set; }
-    
     [JsonPropertyName("vendor_stats_status")]
     public string? VendorStatsStatus { get; set; }
     

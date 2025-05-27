@@ -54,18 +54,5 @@ public class UserInformation {
 
     [JsonPropertyName("created_timestamp")]
     public DateTime CreatedTimestamp { get; set; }
-
-    // Client relationship
-    [JsonPropertyName("client_id")]
-    public string ClientId { get; set; } = string.Empty;
-
-    // Foreign key to ClientInformation
-    [JsonPropertyName("client_information_id")]
-    public long? ClientInformationId { get; set; }
-
-    [JsonIgnore]
-    public ClientInformation? Client { get; set; }
-
-    [JsonIgnore] // Ignore this for EF Core
-    public Users? UserData { get; set; }
+    
 }
