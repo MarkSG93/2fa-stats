@@ -72,24 +72,6 @@ public class StatsContext : DbContext, IAsyncDisposable {
             .Property(u => u.UserId)
             .ValueGeneratedOnAdd();
 
-        // Set table name for User entity
-        modelBuilder.Entity<UserInformation>()
-            .ToTable("AppUsers");
-
-        // Define relationship between User and ClientInformation
-        modelBuilder.Entity<UserInformation>()
-            .HasOne(u => u.Client)
-            .WithMany()
-            .HasForeignKey(u => u.ClientInformationId)
-            .IsRequired(false);
-
-        // Ignore the nested classes/complex types to prevent EF from treating them as entities
-        modelBuilder.Entity<ClientInformation>()
-            .Ignore(c => c.ClientUsers);
-
-        modelBuilder.Entity<UserInformation>()
-            .Ignore(u => u.UserData);
-
         // Explicitly ignore API model types that shouldn't be mapped to tables
         modelBuilder.Ignore<User.UserCostCentre>();
         modelBuilder.Ignore<User.UserDefaultClient>();
@@ -100,11 +82,6 @@ public class StatsContext : DbContext, IAsyncDisposable {
         modelBuilder.Ignore<Common.OtpSettings>();
         modelBuilder.Ignore<Common.OtpMethods>();
         modelBuilder.Ignore<Common.TokenValidity>();
-
-        // Mark API response models as keyless entity types
-        // These are just response containers, not actual database entities
-        modelBuilder.Entity<Users>().HasNoKey();
-        modelBuilder.Entity<User>().HasNoKey();
     }
 
     public static Guid Int2Guid(int value) {

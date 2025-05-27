@@ -192,131 +192,131 @@ internal class ClientTasks {
         }
     }
 
-    private static async Task GetClientUsers(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken) {
-        apiInformation.ApiCallsClients++;
-        apiInformation.LastUpdated = DateTime.UtcNow;
+    // private static async Task GetClientUsers(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken) {
+    //     apiInformation.ApiCallsClients++;
+    //     apiInformation.LastUpdated = DateTime.UtcNow;
+    //
+    //     var url = $"accounts/users?owner={clientInformation.ClientId}&offset=0&limit={10000}&sort=name:asc&filter=(state=inactive|state=active|state=suspended)";
+    //     Users? response;
+    //     try {
+    //         // Use GetAsync with the cancellation token for proper cancellation support
+    //         var httpResponse = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+    //
+    //         // Check if the request was successful
+    //         if (!httpResponse.IsSuccessStatusCode) {
+    //             StatsLogger.Log(stats: apiInformation, $"HTTP error {httpResponse.StatusCode} getting client. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
+    //             return;
+    //         }
+    //
+    //         // Check content type to ensure it's JSON
+    //         var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+    //         if (contentType == null || !contentType.Contains("application/json")) {
+    //             StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for client. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
+    //
+    //             // For debugging: try to read the content as string to see what's being returned
+    //             if (contentType?.Contains("text/html") == true)
+    //                 try {
+    //                     var htmlContent = await httpResponse.Content.ReadAsStringAsync();
+    //                     var preview = htmlContent.Length > 100 ? htmlContent.Substring(0, 100) + "..." : htmlContent;
+    //                     StatsLogger.Log(stats: apiInformation, $"HTML response preview: {preview}", client: clientInformation.ClientId);
+    //
+    //                     clientInformation.ClientStatsStatus = "ERROR_HTML_RESPONSE";
+    //                 }
+    //                 catch (Exception ex) {
+    //                     StatsLogger.Log(stats: apiInformation, $"Error reading HTML content: {ex.Message}", client: clientInformation.ClientId);
+    //                 }
+    //
+    //             return;
+    //         }
+    //
+    //         // Read as JSON
+    //         response = await httpResponse.Content.ReadFromJsonAsync<Users>(cancellationToken: cancellationToken);
+    //     }
+    //     catch (JsonException jsonEx) {
+    //         StatsLogger.Log(stats: apiInformation, $"JSON parsing error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
+    //         StatsLogger.Log(stats: apiInformation, message: jsonEx.Message);
+    //         return;
+    //     }
+    //     catch (TaskCanceledException tcEx) {
+    //         StatsLogger.Log(stats: apiInformation, $"Request timeout or cancellation getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
+    //         StatsLogger.Log(stats: apiInformation, message: tcEx.Message);
+    //         return;
+    //     }
+    //     catch (Exception ex) {
+    //         StatsLogger.Log(stats: apiInformation, $"Error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
+    //         StatsLogger.Log(stats: apiInformation, message: ex.Message);
+    //         return;
+    //     }
+    //
+    //     // Safely set properties with null checks to avoid NullReferenceException
+    //     try {
+    //         // Store the user response in the client
+    //         clientInformation.ClientUsers = response;
+    //
+    //         // Process and save users to the UserInformation table
+    //         if (response != null && response.UserList != null && response.UserList.Any()) {
+    //             SaveUsers(apiInformation: apiInformation, clientInformation: clientInformation, response: response);
+    //             StatsLogger.Log(stats: apiInformation, $"Saved {response.UserList.Count} users for client {clientInformation.ClientId}", client: clientInformation.ClientId);
+    //         }
+    //
+    //         clientInformation.ClientStatsStatus = "SUCCESS";
+    //     }
+    //     catch (Exception ex) {
+    //         StatsLogger.Log(stats: apiInformation, $"Error processing user list for {clientInformation.ClientId}: {ex.Message}", client: clientInformation.ClientId);
+    //     }
+    // }
 
-        var url = $"accounts/users?owner={clientInformation.ClientId}&offset=0&limit={10000}&sort=name:asc&filter=(state=inactive|state=active|state=suspended)";
-        Users? response;
-        try {
-            // Use GetAsync with the cancellation token for proper cancellation support
-            var httpResponse = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
-
-            // Check if the request was successful
-            if (!httpResponse.IsSuccessStatusCode) {
-                StatsLogger.Log(stats: apiInformation, $"HTTP error {httpResponse.StatusCode} getting client. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
-                return;
-            }
-
-            // Check content type to ensure it's JSON
-            var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
-            if (contentType == null || !contentType.Contains("application/json")) {
-                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for client. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
-
-                // For debugging: try to read the content as string to see what's being returned
-                if (contentType?.Contains("text/html") == true)
-                    try {
-                        var htmlContent = await httpResponse.Content.ReadAsStringAsync();
-                        var preview = htmlContent.Length > 100 ? htmlContent.Substring(0, 100) + "..." : htmlContent;
-                        StatsLogger.Log(stats: apiInformation, $"HTML response preview: {preview}", client: clientInformation.ClientId);
-
-                        clientInformation.ClientStatsStatus = "ERROR_HTML_RESPONSE";
-                    }
-                    catch (Exception ex) {
-                        StatsLogger.Log(stats: apiInformation, $"Error reading HTML content: {ex.Message}", client: clientInformation.ClientId);
-                    }
-
-                return;
-            }
-
-            // Read as JSON
-            response = await httpResponse.Content.ReadFromJsonAsync<Users>(cancellationToken: cancellationToken);
-        }
-        catch (JsonException jsonEx) {
-            StatsLogger.Log(stats: apiInformation, $"JSON parsing error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
-            StatsLogger.Log(stats: apiInformation, message: jsonEx.Message);
-            return;
-        }
-        catch (TaskCanceledException tcEx) {
-            StatsLogger.Log(stats: apiInformation, $"Request timeout or cancellation getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
-            StatsLogger.Log(stats: apiInformation, message: tcEx.Message);
-            return;
-        }
-        catch (Exception ex) {
-            StatsLogger.Log(stats: apiInformation, $"Error getting client {clientInformation.ClientId}. URL: {httpClient.BaseAddress}{url}", client: clientInformation.ClientId);
-            StatsLogger.Log(stats: apiInformation, message: ex.Message);
-            return;
-        }
-
-        // Safely set properties with null checks to avoid NullReferenceException
-        try {
-            // Store the user response in the client
-            clientInformation.ClientUsers = response;
-
-            // Process and save users to the UserInformation table
-            if (response != null && response.UserList != null && response.UserList.Any()) {
-                SaveUsers(apiInformation: apiInformation, clientInformation: clientInformation, response: response);
-                StatsLogger.Log(stats: apiInformation, $"Saved {response.UserList.Count} users for client {clientInformation.ClientId}", client: clientInformation.ClientId);
-            }
-
-            clientInformation.ClientStatsStatus = "SUCCESS";
-        }
-        catch (Exception ex) {
-            StatsLogger.Log(stats: apiInformation, $"Error processing user list for {clientInformation.ClientId}: {ex.Message}", client: clientInformation.ClientId);
-        }
-    }
-
-    private static List<UserInformation> SaveUsers(ApiInformation apiInformation, ClientInformation clientInformation, Users? response) {
-        var userList = new List<UserInformation>();
-
-        if (response == null || response.UserList == null || !response.UserList.Any())
-            return userList;
-
-        foreach (var apiUser in response.UserList)
-            try {
-                // Create a User entity
-                Console.WriteLine($"Creating User entity for {apiUser.Id}");
-                var user = new UserInformation {
-                    ApiUserId = apiUser.Id,
-                    Name = apiUser.Name ?? string.Empty,
-                    Email = apiUser.EmailAddress ?? string.Empty,
-                    Mobile = apiUser.Mobile,
-                    TimeZone = apiUser.TimeZoneId,
-                    Language = apiUser.Language,
-                    State = apiUser.State,
-                    ModifiedDate = apiUser.ModifiedDate,
-                    CreatedTimestamp = DateTime.UtcNow,
-                    ClientId = clientInformation.ClientId, // Link to the client
-                    ClientInformationId = clientInformation.ClientInformationId // Link to ClientInformation entity
-                };
-
-                // Set owner information if available
-                if (apiUser.Owner != null) {
-                    user.OwnerId = apiUser.Owner.Id ?? string.Empty;
-                    user.OwnerName = apiUser.Owner.Name ?? string.Empty;
-                    // Common.Owner doesn't have a Type property, leave it empty for now
-                    user.OwnerType = string.Empty;
-                }
-
-                // Set default client information if available
-                if (apiUser.DefaultClient != null) {
-                    user.DefaultClientId = apiUser.DefaultClient.Id ?? string.Empty;
-                    user.DefaultClientName = apiUser.DefaultClient.Name ?? string.Empty;
-                }
-
-                // Add user to the database context
-                Console.WriteLine($"Add user to the database context {apiUser.Id}");
-                apiInformation.StatsContext?.Users.Add(entity: user);
-                Console.WriteLine($"Add user to the userList {apiUser.Id}");
-                userList.Add(item: user);
-                // UserInformation class has been merged with User class, no need for separate record
-            }
-            catch (Exception ex) {
-                StatsLogger.Log(stats: apiInformation, $"Error saving user {apiUser.Id}: {ex.Message}", client: clientInformation.ClientId);
-            }
-
-        return userList;
-    }
+    // private static List<UserInformation> SaveUsers(ApiInformation apiInformation, ClientInformation clientInformation, Users? response) {
+    //     var userList = new List<UserInformation>();
+    //
+    //     if (response == null || response.UserList == null || !response.UserList.Any())
+    //         return userList;
+    //
+    //     foreach (var apiUser in response.UserList)
+    //         try {
+    //             // Create a User entity
+    //             Console.WriteLine($"Creating User entity for {apiUser.Id}");
+    //             var user = new UserInformation {
+    //                 ApiUserId = apiUser.Id,
+    //                 Name = apiUser.Name ?? string.Empty,
+    //                 Email = apiUser.EmailAddress ?? string.Empty,
+    //                 Mobile = apiUser.Mobile,
+    //                 TimeZone = apiUser.TimeZoneId,
+    //                 Language = apiUser.Language,
+    //                 State = apiUser.State,
+    //                 ModifiedDate = apiUser.ModifiedDate,
+    //                 CreatedTimestamp = DateTime.UtcNow,
+    //                 ClientId = clientInformation.ClientId, // Link to the client
+    //                 ClientInformationId = clientInformation.ClientInformationId // Link to ClientInformation entity
+    //             };
+    //
+    //             // Set owner information if available
+    //             if (apiUser.Owner != null) {
+    //                 user.OwnerId = apiUser.Owner.Id ?? string.Empty;
+    //                 user.OwnerName = apiUser.Owner.Name ?? string.Empty;
+    //                 // Common.Owner doesn't have a Type property, leave it empty for now
+    //                 user.OwnerType = string.Empty;
+    //             }
+    //
+    //             // Set default client information if available
+    //             if (apiUser.DefaultClient != null) {
+    //                 user.DefaultClientId = apiUser.DefaultClient.Id ?? string.Empty;
+    //                 user.DefaultClientName = apiUser.DefaultClient.Name ?? string.Empty;
+    //             }
+    //
+    //             // Add user to the database context
+    //             Console.WriteLine($"Add user to the database context {apiUser.Id}");
+    //             apiInformation.StatsContext?.Users.Add(entity: user);
+    //             Console.WriteLine($"Add user to the userList {apiUser.Id}");
+    //             userList.Add(item: user);
+    //             // UserInformation class has been merged with User class, no need for separate record
+    //         }
+    //         catch (Exception ex) {
+    //             StatsLogger.Log(stats: apiInformation, $"Error saving user {apiUser.Id}: {ex.Message}", client: clientInformation.ClientId);
+    //         }
+    //
+    //     return userList;
+    // }
 
     private static async Task GetClientInformationAndSettings(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken = default) {
         apiInformation.ApiCallsClients++;

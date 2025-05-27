@@ -34,72 +34,72 @@ internal class DistributorTasks {
         distributor.CreatedTimestamp = DateTime.UtcNow; // update the CreatedTimestamp now we have all the info
     }
 
-    private static async Task GetDistributorUsers(HttpClient httpClient, ApiInformation apiInformation, DistributorInformation distributorInformation, CancellationToken cancellationToken) {
-        apiInformation.ApiCallsDistributors++;
-        apiInformation.LastUpdated = DateTime.UtcNow;
-
-        var url = $"accounts/users?owner={distributorInformation.DistributorId}&offset=0&limit={10000}&sort=name:asc&filter=(state=inactive|state=active|state=suspended)";
-        Users? response;
-        try {
-            // Use GetAsync with the cancellation token for proper cancellation support
-            var httpResponse = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
-
-            // Check if the request was successful
-            if (!httpResponse.IsSuccessStatusCode) {
-                StatsLogger.Log(stats: apiInformation, $"HTTP error {httpResponse.StatusCode} getting distributor users. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
-                return;
-            }
-
-            // Check content type to ensure it's JSON
-            var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
-            if (contentType == null || !contentType.Contains("application/json")) {
-                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor users. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
-
-                // For debugging: try to read the content as string to see what's being returned
-                if (contentType?.Contains("text/html") == true)
-                    try {
-                        var htmlContent = await httpResponse.Content.ReadAsStringAsync();
-                        var preview = htmlContent.Length > 100 ? htmlContent.Substring(0, 100) + "..." : htmlContent;
-                        StatsLogger.Log(stats: apiInformation, $"HTML response preview: {preview}", distributor: distributorInformation.DistributorId);
-
-                        distributorInformation.DistributorStatsStatus = "ERROR_HTML_RESPONSE";
-                    }
-                    catch (Exception ex) {
-                        StatsLogger.Log(stats: apiInformation, $"Error reading HTML content: {ex.Message}", distributor: distributorInformation.DistributorId);
-                    }
-
-                return;
-            }
-
-            // Read as JSON
-            response = await httpResponse.Content.ReadFromJsonAsync<Users>(cancellationToken: cancellationToken);
-        }
-        catch (JsonException jsonEx) {
-            StatsLogger.Log(stats: apiInformation, $"JSON parsing error getting distributor users {distributorInformation.DistributorId}. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
-            StatsLogger.Log(stats: apiInformation, message: jsonEx.Message);
-            return;
-        }
-        catch (TaskCanceledException tcEx) {
-            StatsLogger.Log(stats: apiInformation, $"Request timeout or cancellation getting distributor users {distributorInformation.DistributorId}. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
-            StatsLogger.Log(stats: apiInformation, message: tcEx.Message);
-            return;
-        }
-        catch (Exception ex) {
-            StatsLogger.Log(stats: apiInformation, $"Error getting distributor users {distributorInformation.DistributorId}. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
-            StatsLogger.Log(stats: apiInformation, message: ex.Message);
-            return;
-        }
-
-        // Safely set properties with null checks to avoid NullReferenceException
-        try {
-            if (response != null) distributorInformation.DistributorUsers = response;
-
-            distributorInformation.DistributorStatsStatus = "SUCCESS";
-        }
-        catch (Exception ex) {
-            StatsLogger.Log(stats: apiInformation, $"Error processing user list for distributor {distributorInformation.DistributorId}: {ex.Message}", distributor: distributorInformation.DistributorId);
-        }
-    }
+    // private static async Task GetDistributorUsers(HttpClient httpClient, ApiInformation apiInformation, DistributorInformation distributorInformation, CancellationToken cancellationToken) {
+    //     apiInformation.ApiCallsDistributors++;
+    //     apiInformation.LastUpdated = DateTime.UtcNow;
+    //
+    //     var url = $"accounts/users?owner={distributorInformation.DistributorId}&offset=0&limit={10000}&sort=name:asc&filter=(state=inactive|state=active|state=suspended)";
+    //     Users? response;
+    //     try {
+    //         // Use GetAsync with the cancellation token for proper cancellation support
+    //         var httpResponse = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+    //
+    //         // Check if the request was successful
+    //         if (!httpResponse.IsSuccessStatusCode) {
+    //             StatsLogger.Log(stats: apiInformation, $"HTTP error {httpResponse.StatusCode} getting distributor users. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
+    //             return;
+    //         }
+    //
+    //         // Check content type to ensure it's JSON
+    //         var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+    //         if (contentType == null || !contentType.Contains("application/json")) {
+    //             StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor users. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
+    //
+    //             // For debugging: try to read the content as string to see what's being returned
+    //             if (contentType?.Contains("text/html") == true)
+    //                 try {
+    //                     var htmlContent = await httpResponse.Content.ReadAsStringAsync();
+    //                     var preview = htmlContent.Length > 100 ? htmlContent.Substring(0, 100) + "..." : htmlContent;
+    //                     StatsLogger.Log(stats: apiInformation, $"HTML response preview: {preview}", distributor: distributorInformation.DistributorId);
+    //
+    //                     distributorInformation.DistributorStatsStatus = "ERROR_HTML_RESPONSE";
+    //                 }
+    //                 catch (Exception ex) {
+    //                     StatsLogger.Log(stats: apiInformation, $"Error reading HTML content: {ex.Message}", distributor: distributorInformation.DistributorId);
+    //                 }
+    //
+    //             return;
+    //         }
+    //
+    //         // Read as JSON
+    //         response = await httpResponse.Content.ReadFromJsonAsync<Users>(cancellationToken: cancellationToken);
+    //     }
+    //     catch (JsonException jsonEx) {
+    //         StatsLogger.Log(stats: apiInformation, $"JSON parsing error getting distributor users {distributorInformation.DistributorId}. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
+    //         StatsLogger.Log(stats: apiInformation, message: jsonEx.Message);
+    //         return;
+    //     }
+    //     catch (TaskCanceledException tcEx) {
+    //         StatsLogger.Log(stats: apiInformation, $"Request timeout or cancellation getting distributor users {distributorInformation.DistributorId}. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
+    //         StatsLogger.Log(stats: apiInformation, message: tcEx.Message);
+    //         return;
+    //     }
+    //     catch (Exception ex) {
+    //         StatsLogger.Log(stats: apiInformation, $"Error getting distributor users {distributorInformation.DistributorId}. URL: {httpClient.BaseAddress}{url}", distributor: distributorInformation.DistributorId);
+    //         StatsLogger.Log(stats: apiInformation, message: ex.Message);
+    //         return;
+    //     }
+    //
+    //     // Safely set properties with null checks to avoid NullReferenceException
+    //     try {
+    //         if (response != null) distributorInformation.DistributorUsers = response;
+    //
+    //         distributorInformation.DistributorStatsStatus = "SUCCESS";
+    //     }
+    //     catch (Exception ex) {
+    //         StatsLogger.Log(stats: apiInformation, $"Error processing user list for distributor {distributorInformation.DistributorId}: {ex.Message}", distributor: distributorInformation.DistributorId);
+    //     }
+    // }
 
     private static async Task GetDistributorInformationAndSettings(HttpClient client, ApiInformation apiInformation, DistributorInformation distributorInformation) {
         apiInformation.ApiCallsDistributors++;
