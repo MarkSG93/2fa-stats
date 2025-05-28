@@ -7,7 +7,7 @@ namespace Stats2fa.database;
 public class UserInformation {
     // Primary key
     public long UserInformationId { get; set; }
-    
+
     // User's API ID (from the API response)
     [JsonPropertyName("user_id")]
     public string UserId { get; set; } = string.Empty;
@@ -48,11 +48,17 @@ public class UserInformation {
     [JsonPropertyName("user_default_client_name")]
     public string DefaultClientName { get; set; } = string.Empty;
 
+    // Cost center information
+    [JsonPropertyName("user_cost_centre_id")]
+    public string? CostCentreId { get; set; } = string.Empty;
+
+    [JsonPropertyName("user_cost_centre_name")]
+    public string? CostCentreName { get; set; } = string.Empty;
+
     // Dates
     [JsonPropertyName("user_modified_date")]
     public string? ModifiedDate { get; set; }
 
     [JsonPropertyName("created_timestamp")]
     public DateTime CreatedTimestamp { get; set; }
-    
 }

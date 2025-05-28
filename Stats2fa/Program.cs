@@ -233,14 +233,56 @@ internal class Program {
                 // Continue with the users we were able to fetch
             }
 
-            StatsLogger.Log(stats: apiInformation, $"Total Users ({allUsers.Count:00000})");
+            StatsLogger.Log(stats: apiInformation, $"Total Users from Distributors ({allUsers.Count:00000})");
             await Cache.SaveUsers(db: db, allUsers: allUsers, reportDate: reportDate, apiInformation: apiInformation);
 
             // Step 8 Fetch the Users for Vendors
-            // TODO
-            
+            StatsLogger.Log(stats: apiInformation, "Fetching users for Vendors");
+            var vendorUsers = new ConcurrentBag<User>();
+            try {
+                List<string> vendorIds = allVendors.Select(x => x.Id).ToList();
+                await Task.WhenAll(Parallel.ForEachAsync(source: vendorIds,
+                    (ownerId, cancellationToken) =>
+                        ApiUtils.GetUsersForOwner(result: vendorUsers,
+                            httpClient: httpClient,
+                            apiInformation: apiInformation,
+                            ownerId: ownerId,
+                            null,
+                            cancellationToken: cancellationToken,
+                            Convert.ToInt32(config["ApiQueryLimits:ClientLimit"]),
+                            Convert.ToInt32(config["ApiQueryLimits:ClientMax"]))));
+            }
+            catch (Exception ex) {
+                StatsLogger.Log(stats: apiInformation, $"Error during fetching users for Vendors: {ex.Message}");
+                // Continue with the users we were able to fetch
+            }
+
+            StatsLogger.Log(stats: apiInformation, $"Total Users from Vendors ({vendorUsers.Count:00000})");
+            await Cache.SaveUsers(db: db, allUsers: vendorUsers, reportDate: reportDate, apiInformation: apiInformation);
+
             // Step 9 Fetch the Users for Clients
-            // TODO
+            StatsLogger.Log(stats: apiInformation, "Fetching users for Clients");
+            var clientUsers = new ConcurrentBag<User>();
+            try {
+                List<string> clientIds = allClients.Select(x => x.Id).ToList();
+                await Task.WhenAll(Parallel.ForEachAsync(source: clientIds,
+                    (ownerId, cancellationToken) =>
+                        ApiUtils.GetUsersForOwner(result: clientUsers,
+                            httpClient: httpClient,
+                            apiInformation: apiInformation,
+                            ownerId: ownerId,
+                            null,
+                            cancellationToken: cancellationToken,
+                            Convert.ToInt32(config["ApiQueryLimits:ClientLimit"]),
+                            Convert.ToInt32(config["ApiQueryLimits:ClientMax"]))));
+            }
+            catch (Exception ex) {
+                StatsLogger.Log(stats: apiInformation, $"Error during fetching users for Clients: {ex.Message}");
+                // Continue with the users we were able to fetch
+            }
+
+            StatsLogger.Log(stats: apiInformation, $"Total Users from Clients ({clientUsers.Count:00000})");
+            await Cache.SaveUsers(db: db, allUsers: clientUsers, reportDate: reportDate, apiInformation: apiInformation);
         }
         catch (Exception ex) {
             StatsLogger.Log(stats: apiInformation, $"Unhandled exception: {ex.Message}");

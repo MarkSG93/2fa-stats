@@ -174,9 +174,11 @@ internal class Cache {
                     State = user.State,
                     OwnerId = user.Owner?.Id ?? string.Empty,
                     OwnerName = user.Owner?.Name ?? string.Empty,
-                    OwnerType = user.Owner?.Type ?? string.Empty, 
+                    OwnerType = user.Owner?.Type ?? string.Empty,
                     DefaultClientId = user.DefaultClient?.Id ?? string.Empty,
                     DefaultClientName = user.DefaultClient?.Name ?? string.Empty,
+                    CostCentreId = user.CostCentre?.Id,
+                    CostCentreName = user.CostCentre?.Name,
                     ModifiedDate = user.ModifiedDate,
                     CreatedTimestamp = DateTime.UtcNow
                 };
