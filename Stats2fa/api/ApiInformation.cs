@@ -30,6 +30,9 @@ public class ApiInformation {
 
     [JsonPropertyName("api_calls_clients")]
     public int ApiCallsClients { get; set; }
+    
+    [JsonPropertyName("api_calls_users")]
+    public int ApiCallsUsers { get; set; }
 
     [JsonIgnore]
     public StatsContext? StatsContext { get; set; }

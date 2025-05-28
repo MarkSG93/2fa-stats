@@ -138,4 +138,59 @@ internal class Cache {
         // Save any changes
         await db.SaveChangesAsync();
     }
+
+    public static async Task SaveUsers(StatsContext db, ConcurrentBag<User> allUsers, DateTime reportDate, ApiInformation? apiInformation) {
+        var progressCounter = 1;
+
+        var temp = allUsers.ToList();
+        var sortedList = temp.OrderBy(o => o.Id).Distinct(comparer: UserComparer.Instance).ToList();
+        allUsers = new ConcurrentBag<User>(collection: sortedList);
+
+
+        foreach (var user in allUsers) {
+            var recordExists = false;
+            var updateRequired = true;
+            var userIndex = StatsContext.Guid2Int(value: user.Id);
+            // try get cached client
+            var userInformation = db.Users.SingleOrDefault(x => x.UserInformationId == userIndex);
+
+            if (userInformation != null) {
+                recordExists = true;
+                updateRequired = userInformation.CreatedTimestamp < reportDate;
+            }
+
+            var state = updateRequired ? "preparing" : "skipping";
+            // StatsLogger.Log(apiInformation,$"[{DateTime.UtcNow:s}][   ][{Guid.Empty}][{client.Owner.Id}][{client.Id}] {state} client\t\t({progressCounter++:00000}/{allClients.Count:00000})");
+
+            if (!recordExists)
+                userInformation = new UserInformation {
+                    UserInformationId = userIndex,
+                    ApiUserId = null,
+                    Name = user.Name,
+                    Email = user.EmailAddress,
+                    Mobile = user.Mobile,
+                    TimeZone = user.TimeZoneId,
+                    Language = user.Language,
+                    State = user.State,
+                    OwnerId = user.Owner.Id,
+                    OwnerName = user.Owner.Name,
+                    // OwnerType = user.Owner.??,
+                    DefaultClientId = user.DefaultClient.Id,
+                    DefaultClientName = user.DefaultClient.Name,
+                    ModifiedDate = user.ModifiedDate,
+                    // CreatedTimestamp = user.??
+                };
+
+            // Save to DB
+            try {
+                if (!recordExists) await db.Users.AddAsync(userInformation!);
+            }
+            catch (Exception e) {
+                StatsLogger.Log(stats: apiInformation, $"Error saving to cache {JsonSerializer.Serialize(value: userInformation)}, {e?.InnerException?.Message}");
+            }
+        }
+
+        // Save any changes
+        await db.SaveChangesAsync();
+    }
 }

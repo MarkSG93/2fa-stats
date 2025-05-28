@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Stats2fa.api.models;
 
 public class User {
+    
     [JsonPropertyName("id")]
     public string Id { get; set; }
 
@@ -70,5 +72,17 @@ public class User {
 
         [JsonPropertyName("message")]
         public string? Message { get; set; }
+    }
+}
+
+internal class UserComparer : IEqualityComparer<User> {
+    public static readonly UserComparer Instance = new();
+
+    public bool Equals(User x, User y) {
+        return x.Id.Equals(value: y.Id);
+    }
+
+    public int GetHashCode(User obj) {
+        return obj.Id.GetHashCode();
     }
 }

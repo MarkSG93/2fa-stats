@@ -66,10 +66,10 @@ public class StatsContext : DbContext, IAsyncDisposable {
 
         // Configure User entity
         modelBuilder.Entity<UserInformation>()
-            .HasKey(u => u.UserId);
+            .HasKey(u => u.UserInformationId);
 
         modelBuilder.Entity<UserInformation>()
-            .Property(u => u.UserId)
+            .Property(u => u.UserInformationId)
             .ValueGeneratedOnAdd();
 
         // Explicitly ignore API model types that shouldn't be mapped to tables

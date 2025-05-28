@@ -12,6 +12,106 @@ using Stats2fa.logger;
 namespace Stats2fa.api;
 
 internal class ApiUtils {
+    internal static async ValueTask GetUsersForOwner(ConcurrentBag<User> result, HttpClient httpClient, ApiInformation apiInformation, String ownerId, Users? users, CancellationToken cancellationToken, int limit = 1000, int maxResults = 1000) {
+        users ??= new Users {
+            Offset = 0,
+            Limit = 0,
+            Count = 0,
+            UserList = new List<User>()
+        };
+        apiInformation.ApiCallsUsers++;
+        apiInformation.LastUpdated = DateTime.UtcNow;
+        Users response;
+
+        // var url = $"accounts/vendors?owner={distributor.Id}&offset={vendors.VendorList.Count}&limit={limit}&sort=name&filter=state!=deleted";
+        var url = $"accounts/users?owner={ownerId}&offset=0&limit={10000}&sort=name:asc&filter=(state=inactive|state=active|state=suspended)";
+
+        try {
+            // Use GetAsync instead of GetFromJsonAsync for more control over response handling
+            var httpResponse = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+
+            // Check if the request was successful
+            if (!httpResponse.IsSuccessStatusCode) {
+                StatsLogger.Log(stats: apiInformation, $"HTTP error {httpResponse.StatusCode} getting users for Owner {ownerId}. URL: {httpClient.BaseAddress}{url}");
+
+                // Just return the current users without throwing an exception
+                if (users.UserList.Count > 0)
+                    foreach (var user in users.UserList)
+                        result.Add(item: user);
+                return;
+            }
+
+            // Check content type to ensure it's JSON
+            var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+            if (contentType == null || !contentType.Contains("application/json")) {
+                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor. URL: {httpClient.BaseAddress}{url}");
+
+                // Just return the current users without throwing an exception
+                if (users.UserList.Count > 0)
+                    foreach (var user in users.UserList)
+                        result.Add(item: user);
+                return;
+            }
+
+            // Read as JSON
+            var responseText = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+            Console.WriteLine(responseText);
+
+            response = await httpResponse.Content.ReadFromJsonAsync<Users>(cancellationToken: cancellationToken);
+
+            if (response == null) {
+                StatsLogger.Log(stats: apiInformation, $"Null response getting users for Owner {ownerId}. URL: {httpClient.BaseAddress}{url}");
+
+                // Just return the current users without throwing an exception
+                if (users.UserList.Count > 0)
+                    foreach (var user in users.UserList)
+                        result.Add(item: user);
+                return;
+            }
+        }
+        catch (JsonException jsonEx) {
+            StatsLogger.Log(stats: apiInformation, $"JSON parsing error getting users for Owner {ownerId}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(stats: apiInformation, message: jsonEx.Message);
+
+            // Just return the current users without throwing an exception
+            if (users.UserList.Count > 0)
+                foreach (var user in users.UserList)
+                    result.Add(item: user);
+            return;
+        }
+        catch (TaskCanceledException tcEx) {
+            StatsLogger.Log(stats: apiInformation, $"Request timeout or cancellation getting users for Owner {ownerId}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(stats: apiInformation, message: tcEx.Message);
+
+            // Just return the current users without throwing an exception
+            if (users.UserList.Count > 0)
+                foreach (var user in users.UserList)
+                    result.Add(item: user);
+            return;
+        }
+        catch (Exception e) {
+            StatsLogger.Log(stats: apiInformation, $"Error getting users for Owner {ownerId}. URL: {httpClient.BaseAddress}{url}");
+            StatsLogger.Log(stats: apiInformation, message: e.Message);
+
+            // Just return the current users without throwing an exception
+            if (users.UserList.Count > 0)
+                foreach (var user in users.UserList)
+                    result.Add(item: user);
+            return;
+        }
+
+        users.Count = response.Count;
+        users.Limit = response.Limit;
+        users.UserList.AddRange(collection: response.UserList);
+
+        if (users.UserList.Count < response.Count && users.UserList.Count < maxResults)
+            await GetUsersForOwner(result: result, httpClient: httpClient, apiInformation: apiInformation, ownerId, users: users, cancellationToken: cancellationToken, limit: limit, maxResults: maxResults);
+        else
+            foreach (var user in users.UserList)
+                result.Add(item: user);
+    }
+
+
     internal static async Task<Distributors> GetDistributors(HttpClient client, ApiInformation apiInformation, Distributors? distributors, int limit = 1000, int maxResults = 1000) {
         distributors ??= new Distributors {
             Offset = 0,

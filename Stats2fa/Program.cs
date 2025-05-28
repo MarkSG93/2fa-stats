@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.RateLimiting;
@@ -166,9 +168,10 @@ internal class Program {
                 StatsLogger.Log(stats: apiInformation, $"Error during vendor fetching: {ex.Message}");
                 // Continue with the vendors we were able to fetch
             }
+
             StatsLogger.Log(stats: apiInformation, $"Total vendors ({allVendors.Count:00000})");
             await Cache.SaveVendors(db: db, allVendors: allVendors, reportDate: reportDate, apiInformation: apiInformation);
-            
+
             if (allVendors.Count == 0) {
                 StatsLogger.Log(stats: apiInformation, "No vendors found. Exiting.");
                 return (int)ExitCode.Success;
@@ -208,11 +211,33 @@ internal class Program {
             // Step 6 Fetch the Client Information
             StatsLogger.Log(stats: apiInformation, "Fetching client information");
             await ClientTasks.PopulateClientInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
-            
-            // Step 7 Fetch the Users Information
-            StatsLogger.Log(stats: apiInformation, "Fetching users information");
+
+            // Step 7 Fetch the Users for Distributors
+            StatsLogger.Log(stats: apiInformation, "Fetching users for Distributors");
+            var allUsers = new ConcurrentBag<User>();
+            try {
+                List<string> distributorIds = distributors.DistributorList.Select(x => x.Id).ToList();
+                await Task.WhenAll(Parallel.ForEachAsync(source: distributorIds,
+                    (ownerId, cancellationToken) =>
+                        ApiUtils.GetUsersForOwner(result: allUsers,
+                            httpClient: httpClient,
+                            apiInformation: apiInformation,
+                            ownerId: ownerId,
+                            null,
+                            cancellationToken: cancellationToken,
+                            Convert.ToInt32(config["ApiQueryLimits:ClientLimit"]),
+                            Convert.ToInt32(config["ApiQueryLimits:ClientMax"]))));
+            }
+            catch (Exception ex) {
+                StatsLogger.Log(stats: apiInformation, $"Error during fetching users for Distributors: {ex.Message}");
+                // Continue with the users we were able to fetch
+            }
+
+            StatsLogger.Log(stats: apiInformation, $"Total Users ({allUsers.Count:00000})");
+            await Cache.SaveUsers(db: db, allUsers: allUsers, reportDate: reportDate, apiInformation: apiInformation);
+
+
             // await ClientTasks.PopulateUsersInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
-            
         }
         catch (Exception ex) {
             StatsLogger.Log(stats: apiInformation, $"Unhandled exception: {ex.Message}");

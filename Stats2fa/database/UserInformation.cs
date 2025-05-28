@@ -6,8 +6,8 @@ namespace Stats2fa.database;
 
 public class UserInformation {
     // Primary key
-    public long UserId { get; set; }
-
+    public long UserInformationId { get; set; }
+    
     // User's API ID (from the API response)
     [JsonPropertyName("user_id")]
     public string ApiUserId { get; set; } = string.Empty;
