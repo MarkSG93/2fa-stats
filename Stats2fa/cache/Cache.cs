@@ -165,20 +165,20 @@ internal class Cache {
             if (!recordExists)
                 userInformation = new UserInformation {
                     UserInformationId = userIndex,
-                    ApiUserId = null,
-                    Name = user.Name,
-                    Email = user.EmailAddress,
+                    ApiUserId = user.Id,
+                    Name = user.Name ?? string.Empty,
+                    Email = user.EmailAddress ?? string.Empty,
                     Mobile = user.Mobile,
                     TimeZone = user.TimeZoneId,
                     Language = user.Language,
                     State = user.State,
-                    OwnerId = user.Owner.Id,
-                    OwnerName = user.Owner.Name,
-                    // OwnerType = user.Owner.??,
-                    DefaultClientId = user.DefaultClient.Id,
-                    DefaultClientName = user.DefaultClient.Name,
+                    OwnerId = user.Owner?.Id ?? string.Empty,
+                    OwnerName = user.Owner?.Name ?? string.Empty,
+                    OwnerType = string.Empty, // Owner.Type isn't available in the Common.Owner class
+                    DefaultClientId = user.DefaultClient?.Id ?? string.Empty,
+                    DefaultClientName = user.DefaultClient?.Name ?? string.Empty,
                     ModifiedDate = user.ModifiedDate,
-                    // CreatedTimestamp = user.??
+                    CreatedTimestamp = DateTime.UtcNow
                 };
 
             // Save to DB
