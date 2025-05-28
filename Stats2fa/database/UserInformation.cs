@@ -10,7 +10,7 @@ public class UserInformation {
     
     // User's API ID (from the API response)
     [JsonPropertyName("user_id")]
-    public string ApiUserId { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
 
     // Basic user information
     [JsonPropertyName("user_name")]

@@ -236,8 +236,11 @@ internal class Program {
             StatsLogger.Log(stats: apiInformation, $"Total Users ({allUsers.Count:00000})");
             await Cache.SaveUsers(db: db, allUsers: allUsers, reportDate: reportDate, apiInformation: apiInformation);
 
-
-            // await ClientTasks.PopulateUsersInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
+            // Step 8 Fetch the Users for Vendors
+            // TODO
+            
+            // Step 9 Fetch the Users for Clients
+            // TODO
         }
         catch (Exception ex) {
             StatsLogger.Log(stats: apiInformation, $"Unhandled exception: {ex.Message}");

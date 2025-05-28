@@ -165,7 +165,7 @@ internal class Cache {
             if (!recordExists)
                 userInformation = new UserInformation {
                     UserInformationId = userIndex,
-                    ApiUserId = user.Id,
+                    UserId = user.Id,
                     Name = user.Name ?? string.Empty,
                     Email = user.EmailAddress ?? string.Empty,
                     Mobile = user.Mobile,
@@ -174,7 +174,7 @@ internal class Cache {
                     State = user.State,
                     OwnerId = user.Owner?.Id ?? string.Empty,
                     OwnerName = user.Owner?.Name ?? string.Empty,
-                    OwnerType = string.Empty, // Owner.Type isn't available in the Common.Owner class
+                    OwnerType = user.Owner?.Type ?? string.Empty, 
                     DefaultClientId = user.DefaultClient?.Id ?? string.Empty,
                     DefaultClientName = user.DefaultClient?.Name ?? string.Empty,
                     ModifiedDate = user.ModifiedDate,
