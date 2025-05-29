@@ -5,8 +5,6 @@ namespace StatsBetter.Output;
 
 public class StatsInformationUser {
     // user stuff
-    public long? UserInformationId { get; set; }
-
     [JsonPropertyName("user_id")]
     public string? UserId { get; set; }
 
@@ -55,8 +53,8 @@ public class StatsInformationUser {
     [JsonPropertyName("user_modified_date")]
     public string? ModifiedDate { get; set; }
 
-    [JsonPropertyName("created_timestamp")]
-    public DateTime? CreatedTimestamp { get; set; }
+    [JsonPropertyName("user_date")]
+    public DateTime? UserCreatedTimestamp { get; set; }
 
     [JsonPropertyName("user_otp_type")]
     public string? TotpType { get; set; }

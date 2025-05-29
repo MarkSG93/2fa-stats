@@ -314,7 +314,7 @@ internal class Program {
                 var distributor = distributorInformation.Single(x => x.DistributorId == vendor.VendorDistributorId);
                 var stat = new StatsInformationDistributorVendorClient();
 
-                stat.UserCreatedTimestamp = client.CreatedTimestamp;
+                stat.ClientCreatedTimestamp = client.CreatedTimestamp;
                 stat.ClientId = client.ClientId;
                 stat.ClientName = client.ClientName;
                 stat.ClientType = client.ClientType;
@@ -380,9 +380,10 @@ internal class Program {
             }
 
             // Write the output file
-            StatsLogger.Log(stats: apiInformation, $"Writing output to {outputFileName}");
-            await File.WriteAllLinesAsync(outputFileName, multipleJsonLines);
-            StatsLogger.Log(stats: apiInformation, $"Successfully wrote {multipleJsonLines.Count} records to {outputFileName}");
+            var jsonFilename = $"{outputFileName.Replace(".json", "")}_dvc.json";
+            StatsLogger.Log(stats: apiInformation, $"Writing output to {jsonFilename}");
+            await File.WriteAllLinesAsync(jsonFilename, multipleJsonLines);
+            StatsLogger.Log(stats: apiInformation, $"Successfully wrote {multipleJsonLines.Count} records to {jsonFilename}");
 
             // Step 12 Write out the JSON File for User Information
 
@@ -392,8 +393,6 @@ internal class Program {
             multipleJsonLines = new List<string>();
             foreach (var user in userInformation) {
                 var stat = new StatsInformationUser();
-
-                stat.UserInformationId = user.UserInformationId;
                 stat.UserId = user.UserId;
                 stat.Name = user.Name;
                 stat.Email = user.Email;
@@ -410,7 +409,7 @@ internal class Program {
                 stat.CostCentreName = user.CostCentreName;
                 stat.UserStatsStatus = user.UserStatsStatus;
                 stat.ModifiedDate = user.ModifiedDate;
-                stat.CreatedTimestamp = user.CreatedTimestamp;
+                stat.UserCreatedTimestamp = user.CreatedTimestamp;
                 stat.TotpType = user.TotpType;
                 stat.TotpDate = user.TotpDate;
                 stat.TotpVerified = user.TotpVerified;
@@ -420,10 +419,10 @@ internal class Program {
             }
 
             // Write the output file
-            outputFileName = $"{outputFileName.Replace(".json", "")}_users.json";
-            StatsLogger.Log(stats: apiInformation, $"Writing output to {outputFileName}");
-            await File.WriteAllLinesAsync(outputFileName, multipleJsonLines);
-            StatsLogger.Log(stats: apiInformation, $"Successfully wrote {multipleJsonLines.Count} records to {outputFileName}");
+            jsonFilename = $"{outputFileName.Replace(".json", "")}_users.json";
+            StatsLogger.Log(stats: apiInformation, $"Writing output to {jsonFilename}");
+            await File.WriteAllLinesAsync(jsonFilename, multipleJsonLines);
+            StatsLogger.Log(stats: apiInformation, $"Successfully wrote {multipleJsonLines.Count} records to {jsonFilename}");
         }
         catch (Exception ex) {
             StatsLogger.Log(stats: apiInformation, $"Unhandled exception: {ex.Message}");
