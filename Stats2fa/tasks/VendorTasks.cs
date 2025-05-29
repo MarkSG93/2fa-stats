@@ -159,4 +159,16 @@ internal class VendorTasks {
             StatsLogger.Log(stats: apiInformation, message: ex.StackTrace);
         }
     }
+
+    internal static List<VendorInformation> FetchAllProcessedVendors(StatsContext db, DateTime reportDate, ApiInformation? apiInformation) {
+        try {
+            var items = db.Vendors
+                .Where(x => x.CreatedTimestamp > reportDate);
+            return items.ToList();
+        }
+        catch (Exception ex) {
+            StatsLogger.Log(stats: apiInformation, $"Error fetching processed clients from database: {ex.Message}");
+            return new List<VendorInformation>();
+        }
+    }
 }

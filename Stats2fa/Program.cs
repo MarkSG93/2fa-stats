@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +17,7 @@ using Stats2fa.cache;
 using Stats2fa.database;
 using Stats2fa.logger;
 using Stats2fa.tasks;
+using StatsBetter.Output;
 
 namespace Stats2fa;
 
@@ -286,6 +289,86 @@ internal class Program {
             // Step 10 Fetch the UserInformation for all Clients
             StatsLogger.Log(stats: apiInformation, "Fetching user information");
             await UserTasks.PopulateUserInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
+
+            // Step 11 Write out the JSON File
+
+            // First, fetch all the info from the database
+            List<UserInformation> userInformation = UserTasks.FetchAllProcessedUsers(db, reportDate, apiInformation: apiInformation);
+            List<ClientInformation> clientInformation = ClientTasks.FetchAllProcessedClients(db, reportDate, apiInformation: apiInformation);
+            List<VendorInformation> vendorInformation = VendorTasks.FetchAllProcessedVendors(db, reportDate, apiInformation: apiInformation);
+            List<DistributorInformation> distributorInformation = DistributorTasks.FetchAllProcessedDistributors(db, reportDate, apiInformation: apiInformation);
+
+            // Make a mega object
+            List<StatsInformation> stats = new List<StatsInformation>();
+            var multipleJsonLines = new List<string>();
+            foreach (var client in clientInformation) {
+                var vendor = vendorInformation.Single(x => x.VendorId == client.ClientVendorId);
+                var distributor = distributorInformation.Single(x => x.DistributorId == vendor.VendorDistributorId);
+                var stat = new StatsInformation();
+
+                stat.UserCreatedTimestamp = client.CreatedTimestamp;
+                stat.ClientId = string.Empty; // TODO ;
+                stat.ClientName = string.Empty; // TODO ;
+                stat.ClientType = string.Empty; // TODO ;
+                stat.ClientStatus = string.Empty; // TODO ;
+                stat.ClientVendorId = string.Empty; // TODO ;
+                stat.ClientStatsStatus = string.Empty; // TODO ;
+                stat.ClientPasswordPolicySourceId = string.Empty; // TODO ;
+                stat.ClientPasswordPolicySourceName = string.Empty; // TODO ;
+                stat.ClientPasswordPolicySourceType = string.Empty; // TODO ;
+                stat.ClientPasswordPolicyPasswordLength = 0; // TODO ;
+                stat.ClientPasswordPolicyPasswordComplexityMixedcase = true; // TODO ;
+                stat.ClientPasswordPolicyPasswordComplexityAlphanumerical = true; // TODO ;
+                stat.ClientPasswordPolicyPasswordComplexityNocommonpasswords = true; // TODO ;
+                stat.ClientPasswordPolicyPasswordComplexitySpecialcharacters = true; // TODO ;
+                stat.ClientPasswordPolicyPasswordExpirationDays = 0; // TODO ;
+                stat.ClientPasswordPolicyOtpSettingsMethodsTotpTokenValidityDays = 0; // TODO ;
+                stat.ClientPasswordPolicyOtpSettingsMethodsEmailTokenValidityDays = 0; // TODO ;
+                stat.ClientPasswordPolicyOtpSettingsGracePeriodDays = 0; // TODO ;
+                stat.ClientPasswordPolicyOtpSettingsMandatoryFor = string.Empty; // TODO ;
+
+                stat.VendorCreatedTimestamp = DateTime.MinValue; // TODO ;
+                stat.VendorDistributorId = string.Empty; // TODO ;
+                stat.VendorId = string.Empty; // TODO ;
+                stat.VendorName = string.Empty; // TODO ;
+                stat.VendorType = string.Empty; // TODO ;
+                stat.VendorStatus = string.Empty; // TODO ;
+                stat.VendorPasswordPolicySourceId = string.Empty; // TODO ;
+                stat.VendorPasswordPolicySourceName = string.Empty; // TODO ;
+                stat.VendorPasswordPolicySourceType = string.Empty; // TODO ;
+                stat.VendorPasswordPolicyPasswordLength = 0; // TODO ;
+                stat.VendorPasswordPolicyPasswordComplexityMixedcase = true; // TODO ;
+                stat.VendorPasswordPolicyPasswordComplexityAlphanumerical = true; // TODO ;
+                stat.VendorPasswordPolicyPasswordComplexityNocommonpasswords = true; // TODO ;
+                stat.VendorPasswordPolicyPasswordComplexitySpecialcharacters = true; // TODO ;
+                stat.VendorPasswordPolicyPasswordExpirationDays = 0; // TODO ;
+                stat.VendorPasswordPolicyOtpSettingsMethodsTotpTokenValidityDays = 0; // TODO ;
+                stat.VendorPasswordPolicyOtpSettingsMethodsEmailTokenValidityDays = 0; // TODO ;
+                stat.VendorPasswordPolicyOtpSettingsGracePeriodDays = 0; // TODO ;
+
+                stat.DistributorCreatedTimestamp = DateTime.MinValue; // TODO ;
+                stat.DistributorId = string.Empty; // TODO ;
+                stat.DistributorName = string.Empty; // TODO ;
+                stat.DistributorType = string.Empty; // TODO ;
+                stat.DistributorStatus = string.Empty; // TODO ;
+                stat.DistributorPasswordPolicySourceId = string.Empty; // TODO ;
+                stat.DistributorPasswordPolicySourceName = string.Empty; // TODO ;
+                stat.DistributorPasswordPolicySourceType = string.Empty; // TODO ;
+                stat.DistributorPasswordPolicyPasswordLength = 0; // TODO ;
+                stat.DistributorPasswordPolicyPasswordComplexityMixedcase = true; // TODO ;
+                stat.DistributorPasswordPolicyPasswordComplexityAlphanumerical = true; // TODO ;
+                stat.DistributorPasswordPolicyPasswordComplexityNocommonpasswords = true; // TODO ;
+                stat.DistributorPasswordPolicyPasswordComplexitySpecialcharacters = true; // TODO ;
+                stat.DistributorPasswordPolicyPasswordExpirationDays = 0; // TODO ;
+                stat.DistributorPasswordPolicyOtpSettingsMethodsTotpTokenValidityDays = 0; // TODO ;
+                stat.DistributorPasswordPolicyOtpSettingsMethodsEmailTokenValidityDays = 0; // TODO ;
+                stat.DistributorPasswordPolicyOtpSettingsGracePeriodDays = 0; // TODO ;
+                stat.DistributorPasswordPolicyOtpSettingsMandatoryFor = string.Empty; // TODO ;
+                stat.DistributorStatsStatus = string.Empty; // TODO ;
+                
+                // woohoo now we have the mega object.
+                multipleJsonLines.Add(JsonSerializer.Serialize(stat));
+            }
         }
         catch (Exception ex) {
             StatsLogger.Log(stats: apiInformation, $"Unhandled exception: {ex.Message}");

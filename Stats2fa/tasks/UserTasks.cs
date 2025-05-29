@@ -208,4 +208,16 @@ public class UserTasks {
             return new List<UserInformation>();
         }
     }
+
+    internal static List<UserInformation> FetchAllProcessedUsers(StatsContext db, DateTime reportDate, ApiInformation? apiInformation) {
+        try {
+            var items = db.Users
+                .Where(x => x.CreatedTimestamp > reportDate);
+            return items.ToList();
+        }
+        catch (Exception ex) {
+            StatsLogger.Log(stats: apiInformation, $"Error fetching processed clients from database: {ex.Message}");
+            return new List<UserInformation>();
+        }
+    }
 }
