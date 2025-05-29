@@ -6,8 +6,8 @@ namespace StatsBetter.Output;
 /// <summary>
 ///     All the Vendor, Distributor, Client information in one place.
 /// </summary>
-public class StatsInformation {
-    public int StatsInformationId { get; set; }
+public class StatsInformationDistributorVendorClient {
+    public int? StatsInformationId { get; set; }
 
     // client stuff
     [JsonPropertyName("client_date")]

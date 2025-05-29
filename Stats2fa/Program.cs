@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +24,15 @@ namespace Stats2fa;
 
 internal class Program {
     private static ILogger _logger;
+
+    // Method to create JSON serializer options that include null values
+    private static JsonSerializerOptions CreateJsonOptionsWithNulls() {
+        return new JsonSerializerOptions {
+            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            IgnoreReadOnlyProperties = false,
+            WriteIndented = false
+        };
+    }
 
     private static async Task<int> Main(string[] args) {
         // Create the logger factory and logger
@@ -290,21 +300,19 @@ internal class Program {
             StatsLogger.Log(stats: apiInformation, "Fetching user information");
             await UserTasks.PopulateUserInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
 
-            // Step 11 Write out the JSON File
+            // Step 11 Write out the JSON File for Client,Distributor,Vendor Information
 
             // First, fetch all the info from the database
-            List<UserInformation> userInformation = UserTasks.FetchAllProcessedUsers(db, reportDate, apiInformation: apiInformation);
             List<ClientInformation> clientInformation = ClientTasks.FetchAllProcessedClients(db, reportDate, apiInformation: apiInformation);
             List<VendorInformation> vendorInformation = VendorTasks.FetchAllProcessedVendors(db, reportDate, apiInformation: apiInformation);
             List<DistributorInformation> distributorInformation = DistributorTasks.FetchAllProcessedDistributors(db, reportDate, apiInformation: apiInformation);
 
             // Make a mega object
-            List<StatsInformation> stats = new List<StatsInformation>();
             var multipleJsonLines = new List<string>();
             foreach (var client in clientInformation) {
                 var vendor = vendorInformation.Single(x => x.VendorId == client.ClientVendorId);
                 var distributor = distributorInformation.Single(x => x.DistributorId == vendor.VendorDistributorId);
-                var stat = new StatsInformation();
+                var stat = new StatsInformationDistributorVendorClient();
 
                 stat.UserCreatedTimestamp = client.CreatedTimestamp;
                 stat.ClientId = client.ClientId;
@@ -366,12 +374,53 @@ internal class Program {
                 stat.DistributorPasswordPolicyOtpSettingsGracePeriodDays = distributor.DistributorPasswordPolicyOtpSettingsGracePeriodDays;
                 stat.DistributorPasswordPolicyOtpSettingsMandatoryFor = distributor.DistributorPasswordPolicyOtpSettingsMandatoryFor;
                 stat.DistributorStatsStatus = distributor.DistributorStatsStatus;
-                
-                // woohoo now we have the mega object.
-                multipleJsonLines.Add(JsonSerializer.Serialize(stat));
+
+                // Serialize with options that include null values
+                multipleJsonLines.Add(JsonSerializer.Serialize(stat, CreateJsonOptionsWithNulls()));
             }
 
             // Write the output file
+            StatsLogger.Log(stats: apiInformation, $"Writing output to {outputFileName}");
+            await File.WriteAllLinesAsync(outputFileName, multipleJsonLines);
+            StatsLogger.Log(stats: apiInformation, $"Successfully wrote {multipleJsonLines.Count} records to {outputFileName}");
+
+            // Step 12 Write out the JSON File for User Information
+
+            // First, fetch all the info from the database
+            List<UserInformation> userInformation = UserTasks.FetchAllProcessedUsers(db, reportDate, apiInformation: apiInformation);
+            // Make a mega object
+            multipleJsonLines = new List<string>();
+            foreach (var user in userInformation) {
+                var stat = new StatsInformationUser();
+
+                stat.UserInformationId = user.UserInformationId;
+                stat.UserId = user.UserId;
+                stat.Name = user.Name;
+                stat.Email = user.Email;
+                stat.Mobile = user.Mobile;
+                stat.TimeZone = user.TimeZone;
+                stat.Language = user.Language;
+                stat.State = user.State;
+                stat.OwnerId = user.OwnerId;
+                stat.OwnerName = user.OwnerName;
+                stat.OwnerType = user.OwnerType;
+                stat.DefaultClientId = user.DefaultClientId;
+                stat.DefaultClientName = user.DefaultClientName;
+                stat.CostCentreId = user.CostCentreId;
+                stat.CostCentreName = user.CostCentreName;
+                stat.UserStatsStatus = user.UserStatsStatus;
+                stat.ModifiedDate = user.ModifiedDate;
+                stat.CreatedTimestamp = user.CreatedTimestamp;
+                stat.TotpType = user.TotpType;
+                stat.TotpDate = user.TotpDate;
+                stat.TotpVerified = user.TotpVerified;
+                // woohoo now we have the mega object.
+                // Serialize with options that include null values
+                multipleJsonLines.Add(JsonSerializer.Serialize(stat, CreateJsonOptionsWithNulls()));
+            }
+
+            // Write the output file
+            outputFileName = $"{outputFileName.Replace(".json", "")}_users.json";
             StatsLogger.Log(stats: apiInformation, $"Writing output to {outputFileName}");
             await File.WriteAllLinesAsync(outputFileName, multipleJsonLines);
             StatsLogger.Log(stats: apiInformation, $"Successfully wrote {multipleJsonLines.Count} records to {outputFileName}");
