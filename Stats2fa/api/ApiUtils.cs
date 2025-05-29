@@ -12,7 +12,7 @@ using Stats2fa.logger;
 namespace Stats2fa.api;
 
 internal class ApiUtils {
-    internal static async ValueTask GetUsersForOwner(ConcurrentBag<User> result, HttpClient httpClient, ApiInformation apiInformation, String ownerId, Users? users, CancellationToken cancellationToken, int limit = 1000, int maxResults = 1000) {
+    internal static async ValueTask GetUsersForOwner(ConcurrentBag<User> result, HttpClient httpClient, ApiInformation apiInformation, string ownerId, Users? users, CancellationToken cancellationToken, int limit = 1000, int maxResults = 1000) {
         users ??= new Users {
             Offset = 0,
             Limit = 0,
@@ -105,7 +105,7 @@ internal class ApiUtils {
         users.UserList.AddRange(collection: response.UserList);
 
         if (users.UserList.Count < response.Count && users.UserList.Count < maxResults)
-            await GetUsersForOwner(result: result, httpClient: httpClient, apiInformation: apiInformation, ownerId, users: users, cancellationToken: cancellationToken, limit: limit, maxResults: maxResults);
+            await GetUsersForOwner(result: result, httpClient: httpClient, apiInformation: apiInformation, ownerId: ownerId, users: users, cancellationToken: cancellationToken, limit: limit, maxResults: maxResults);
         else
             foreach (var user in users.UserList)
                 result.Add(item: user);

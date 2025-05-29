@@ -177,11 +177,11 @@ internal class Cache {
                     OwnerType = user.Owner?.Type ?? string.Empty,
                     DefaultClientId = user.DefaultClient?.Id ?? string.Empty,
                     DefaultClientName = user.DefaultClient?.Name ?? string.Empty,
-                    CostCentreId = string.IsNullOrEmpty(user.CostCentre?.Id) || user.CostCentre?.Id == "00000000-0000-0000-0000-000000000000" ? null : user.CostCentre?.Id,
-                    CostCentreName = string.IsNullOrEmpty(user.CostCentre?.Id) || user.CostCentre?.Id == "00000000-0000-0000-0000-000000000000" ? null : user.CostCentre?.Name,
+                    CostCentreId = string.IsNullOrEmpty(value: user.CostCentre?.Id) || user.CostCentre?.Id == "00000000-0000-0000-0000-000000000000" ? null : user.CostCentre?.Id,
+                    CostCentreName = string.IsNullOrEmpty(value: user.CostCentre?.Id) || user.CostCentre?.Id == "00000000-0000-0000-0000-000000000000" ? null : user.CostCentre?.Name,
                     ModifiedDate = user.ModifiedDate,
                     CreatedTimestamp = DateTime.UtcNow,
-                    UserStatsStatus = string.Empty,
+                    UserStatsStatus = string.Empty
                 };
 
             // Save to DB

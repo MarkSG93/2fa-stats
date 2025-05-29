@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 namespace Stats2fa.api.models;
 
 public class User {
-
     [JsonPropertyName("id")]
     public string Id { get; set; }
 

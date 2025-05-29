@@ -1,7 +1,5 @@
 using System;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using Stats2fa.api.models;
 
 namespace Stats2fa.database;
 
@@ -66,7 +64,7 @@ public class DistributorInformation {
 
     [JsonPropertyName("distributor_stats_status")]
     public string? DistributorStatsStatus { get; set; }
-    
+
     public object this[string propertyName] {
         get {
             var myType = typeof(DistributorInformation);

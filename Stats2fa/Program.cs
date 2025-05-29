@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -215,7 +214,7 @@ internal class Program {
             StatsLogger.Log(stats: apiInformation, "Fetching users for Distributors");
             var allUsers = new ConcurrentBag<User>();
             try {
-                List<string> distributorIds = distributors.DistributorList.Select(x => x.Id).ToList();
+                var distributorIds = distributors.DistributorList.Select(x => x.Id).ToList();
                 distributorIds.Add("00000000-0000-0000-0000-000000000000"); // add the system userId to the list of users to fetch
                 await Task.WhenAll(Parallel.ForEachAsync(source: distributorIds,
                     (ownerId, cancellationToken) =>
@@ -240,7 +239,7 @@ internal class Program {
             StatsLogger.Log(stats: apiInformation, "Fetching users for Vendors");
             var vendorUsers = new ConcurrentBag<User>();
             try {
-                List<string> vendorIds = allVendors.Select(x => x.Id).ToList();
+                var vendorIds = allVendors.Select(x => x.Id).ToList();
                 await Task.WhenAll(Parallel.ForEachAsync(source: vendorIds,
                     (ownerId, cancellationToken) =>
                         ApiUtils.GetUsersForOwner(result: vendorUsers,
@@ -264,7 +263,7 @@ internal class Program {
             StatsLogger.Log(stats: apiInformation, "Fetching users for Clients");
             var clientUsers = new ConcurrentBag<User>();
             try {
-                List<string> clientIds = allClients.Select(x => x.Id).ToList();
+                var clientIds = allClients.Select(x => x.Id).ToList();
                 await Task.WhenAll(Parallel.ForEachAsync(source: clientIds,
                     (ownerId, cancellationToken) =>
                         ApiUtils.GetUsersForOwner(result: clientUsers,
@@ -283,7 +282,7 @@ internal class Program {
 
             StatsLogger.Log(stats: apiInformation, $"Total Users from Clients ({clientUsers.Count:00000})");
             await Cache.SaveUsers(db: db, allUsers: clientUsers, reportDate: reportDate, apiInformation: apiInformation);
-            
+
             // Step 10 Fetch the UserInformation for all Clients
             StatsLogger.Log(stats: apiInformation, "Fetching user information");
             await UserTasks.PopulateUserInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));

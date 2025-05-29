@@ -96,7 +96,7 @@ public class UserTasks {
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
 
             var tasks = new List<Task> {
-                GetUserSettings(httpClient: httpClient, apiInformation: apiInformation, userInformation: userInformation, cancellationToken: timeoutCts.Token),
+                GetUserSettings(httpClient: httpClient, apiInformation: apiInformation, userInformation: userInformation, cancellationToken: timeoutCts.Token)
             };
 
             await Task.WhenAll(tasks: tasks);
@@ -155,8 +155,8 @@ public class UserTasks {
             }
 
             // Read as JSON
-            var responseText = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-            Console.WriteLine(responseText);
+            var responseText = await httpResponse.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
+            Console.WriteLine(value: responseText);
 
             // Read as JSON
             response = await httpResponse.Content.ReadFromJsonAsync<User>() ?? new User();

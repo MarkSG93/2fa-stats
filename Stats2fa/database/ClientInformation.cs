@@ -1,7 +1,5 @@
 using System;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using Stats2fa.api.models;
 
 namespace Stats2fa.database;
 
@@ -69,7 +67,7 @@ public class ClientInformation {
 
     [JsonPropertyName("client_passwordPolicy_otpSettings_mandatoryFor")]
     public string? ClientPasswordPolicyOtpSettingsMandatoryFor { get; set; }
-    
+
     public object this[string propertyName] {
         get {
             var myType = typeof(ClientInformation);

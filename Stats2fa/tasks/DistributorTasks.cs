@@ -27,7 +27,7 @@ internal class DistributorTasks {
     private static async ValueTask GetDistributorInformation(HttpClient httpClient, ApiInformation apiInformation,
         DistributorInformation distributor, CancellationToken cancellationToken) {
         var tasks = new List<Task> {
-            GetDistributorInformationAndSettings(client: httpClient, apiInformation: apiInformation, distributorInformation: distributor),
+            GetDistributorInformationAndSettings(client: httpClient, apiInformation: apiInformation, distributorInformation: distributor)
             // GetDistributorUsers(httpClient: httpClient, apiInformation: apiInformation, distributorInformation: distributor, cancellationToken: cancellationToken)
         };
         await Task.WhenAll(tasks: tasks);

@@ -172,7 +172,7 @@ internal class ClientTasks {
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
 
             var tasks = new List<Task> {
-                GetClientInformationAndSettings(httpClient: httpClient, apiInformation: apiInformation, clientInformation: clientInformation, cancellationToken: timeoutCts.Token),
+                GetClientInformationAndSettings(httpClient: httpClient, apiInformation: apiInformation, clientInformation: clientInformation, cancellationToken: timeoutCts.Token)
                 // GetClientUsers(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: timeoutCts.Token)
             };
 
