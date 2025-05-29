@@ -211,12 +211,12 @@ internal class Program {
             // Step 6 Fetch the Client Information
             StatsLogger.Log(stats: apiInformation, "Fetching client information");
             await ClientTasks.PopulateClientInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
-
             // Step 7 Fetch the Users for Distributors
             StatsLogger.Log(stats: apiInformation, "Fetching users for Distributors");
             var allUsers = new ConcurrentBag<User>();
             try {
                 List<string> distributorIds = distributors.DistributorList.Select(x => x.Id).ToList();
+                distributorIds.Add("00000000-0000-0000-0000-000000000000"); // add the system userId to the list of users to fetch
                 await Task.WhenAll(Parallel.ForEachAsync(source: distributorIds,
                     (ownerId, cancellationToken) =>
                         ApiUtils.GetUsersForOwner(result: allUsers,
@@ -283,6 +283,10 @@ internal class Program {
 
             StatsLogger.Log(stats: apiInformation, $"Total Users from Clients ({clientUsers.Count:00000})");
             await Cache.SaveUsers(db: db, allUsers: clientUsers, reportDate: reportDate, apiInformation: apiInformation);
+            
+            // Step 10 Fetch the UserInformation for all Clients
+            StatsLogger.Log(stats: apiInformation, "Fetching user information");
+            await UserTasks.PopulateUserInformation(httpClient: httpClient, apiInformation: apiInformation, db: db, reportDate: reportDate, Convert.ToInt32(config["ApiQueryLimits:ClientMax"]));
         }
         catch (Exception ex) {
             StatsLogger.Log(stats: apiInformation, $"Unhandled exception: {ex.Message}");

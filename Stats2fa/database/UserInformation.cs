@@ -55,10 +55,23 @@ public class UserInformation {
     [JsonPropertyName("user_cost_centre_name")]
     public string? CostCentreName { get; set; } = string.Empty;
 
+    [JsonPropertyName("user_stats_status")]
+    public string? UserStatsStatus { get; set; } = string.Empty;
+    
     // Dates
     [JsonPropertyName("user_modified_date")]
     public string? ModifiedDate { get; set; }
 
     [JsonPropertyName("created_timestamp")]
     public DateTime CreatedTimestamp { get; set; }
+    
+    // OTP information
+    [JsonPropertyName("user_otp_type")]
+    public string? TotpType { get; set; }
+    
+    [JsonPropertyName("user_otp_date")]
+    public string? TotpDate { get; set; }
+    
+    [JsonPropertyName("user_otp_verified")]
+    public bool? TotpVerified { get; set; }
 }

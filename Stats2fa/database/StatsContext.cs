@@ -75,6 +75,12 @@ public class StatsContext : DbContext, IAsyncDisposable {
         // Explicitly ignore API model types that shouldn't be mapped to tables
         modelBuilder.Ignore<User.UserCostCentre>();
         modelBuilder.Ignore<User.UserDefaultClient>();
+        modelBuilder.Ignore<User.UserRole>();
+        modelBuilder.Ignore<User.NotifySettings>();
+        modelBuilder.Ignore<User.NotifySettings.SmsTime>();
+        modelBuilder.Ignore<User.NotifySettings.NotifyActions>();
+        modelBuilder.Ignore<User.UserEntity>();
+        modelBuilder.Ignore<User.OtpInfo>();
         // Can't use Ignore<T> with struct types like ErrorDetails
         modelBuilder.Ignore<Common.Owner>();
         modelBuilder.Ignore<Common.Source>();

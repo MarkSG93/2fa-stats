@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Stats2fa.api.models;
 
 public class User {
-    
+
     [JsonPropertyName("id")]
     public string Id { get; set; }
 
@@ -42,6 +42,31 @@ public class User {
     [JsonPropertyName("modifiedDate")]
     public string? ModifiedDate { get; set; }
 
+    // Additional fields from the extended response
+    [JsonPropertyName("roles")]
+    [NotMapped]
+    public List<UserRole>? Roles { get; set; }
+
+    [JsonPropertyName("notifySettings")]
+    [NotMapped]
+    public NotifySettings? UserNotifySettings { get; set; }
+
+    [JsonPropertyName("oidcTags")]
+    [NotMapped]
+    public Dictionary<string, object>? OidcTags { get; set; }
+
+    [JsonPropertyName("apiKeys")]
+    [NotMapped]
+    public Dictionary<string, object>? ApiKeys { get; set; }
+
+    [JsonPropertyName("otp")]
+    [NotMapped]
+    public List<OtpInfo>? Otp { get; set; }
+
+    [JsonPropertyName("entity")]
+    [NotMapped]
+    public UserEntity? Entity { get; set; }
+
     public class UserDefaultClient {
         [JsonPropertyName("id")]
         public string Id { get; set; }
@@ -62,6 +87,60 @@ public class User {
         public ErrorDetails? Error { get; set; }
     }
 
+    public class UserRole {
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+    }
+
+    public class NotifySettings {
+        [JsonPropertyName("smsTime")]
+        public SmsTime? UserSmsTime { get; set; }
+
+        [JsonPropertyName("actions")]
+        public NotifyActions? Actions { get; set; }
+
+        public class SmsTime {
+            [JsonPropertyName("to")]
+            public string To { get; set; }
+
+            [JsonPropertyName("from")]
+            public string From { get; set; }
+        }
+
+        public class NotifyActions {
+            [JsonPropertyName("low")]
+            public string Low { get; set; }
+
+            [JsonPropertyName("medium")]
+            public string Medium { get; set; }
+
+            [JsonPropertyName("high")]
+            public string High { get; set; }
+        }
+    }
+
+    public class UserEntity {
+        [JsonPropertyName("modifiedDate")]
+        public string ModifiedDate { get; set; }
+
+        [JsonPropertyName("creationDate")]
+        public string CreationDate { get; set; }
+    }
+
+    public class OtpInfo {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = string.Empty;
+
+        [JsonPropertyName("date")]
+        public string Date { get; set; } = string.Empty;
+
+        [JsonPropertyName("verified")]
+        public bool Verified { get; set; }
+    }
+
     // Use a struct instead of a class to avoid EF treating it as an entity
     public struct ErrorDetails {
         [JsonPropertyName("status")]
@@ -73,10 +152,6 @@ public class User {
         [JsonPropertyName("message")]
         public string? Message { get; set; }
     }
-    
-    // TODO support these additional fields that come from a different response but can be combined
-    // {"id":"494c7592-eb05-4b17-a299-5ffaab5924d3","owner":{"id":"d4d4627b-f436-4d97-a25d-057d56d23605","name":"Example Inc","type":"client"},"name":"Johan Havenga (C)","emailAddress":"johanh@keytelematics.com","mobile":"+","timeZoneId":"Africa/Johannesburg","language":"en-us","state":"active","defaultClient":{"id":"d4d4627b-f436-4d97-a25d-057d56d23605","name":"Example Inc"},"roles":[{"id":"00000000-0000-0000-0000-000000000000","name":"Administrator"}],"notifySettings":{"smsTime":{"to":"23:59:59","from":"00:00:00"},"actions":{"low":"none","medium":"none","high":"none"}},"costCentre":{"id":"4e66094e-9220-406c-87b4-e7e4408da089","name":"Gold Coast"},"oidcTags":{},"apiKeys":{},"otp":[],"entity":{"modifiedDate":"2025/05/28 12:08:58","creationDate":"2024/08/30 09:24:43"}}
-    
 }
 
 internal class UserComparer : IEqualityComparer<User> {

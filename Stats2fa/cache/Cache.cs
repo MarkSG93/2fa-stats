@@ -180,7 +180,8 @@ internal class Cache {
                     CostCentreId = string.IsNullOrEmpty(user.CostCentre?.Id) || user.CostCentre?.Id == "00000000-0000-0000-0000-000000000000" ? null : user.CostCentre?.Id,
                     CostCentreName = string.IsNullOrEmpty(user.CostCentre?.Id) || user.CostCentre?.Id == "00000000-0000-0000-0000-000000000000" ? null : user.CostCentre?.Name,
                     ModifiedDate = user.ModifiedDate,
-                    CreatedTimestamp = DateTime.UtcNow
+                    CreatedTimestamp = DateTime.UtcNow,
+                    UserStatsStatus = string.Empty,
                 };
 
             // Save to DB

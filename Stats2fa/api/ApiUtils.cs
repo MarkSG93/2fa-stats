@@ -44,7 +44,7 @@ internal class ApiUtils {
             // Check content type to ensure it's JSON
             var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
             if (contentType == null || !contentType.Contains("application/json")) {
-                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for distributor. URL: {httpClient.BaseAddress}{url}");
+                StatsLogger.Log(stats: apiInformation, $"Unexpected content type: {contentType} for client. URL: {httpClient.BaseAddress}{url}");
 
                 // Just return the current users without throwing an exception
                 if (users.UserList.Count > 0)
@@ -54,8 +54,8 @@ internal class ApiUtils {
             }
 
             // Read as JSON
-            var responseText = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-            Console.WriteLine(responseText);
+            // var responseText = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+            // Console.WriteLine(responseText);
 
             response = await httpResponse.Content.ReadFromJsonAsync<Users>(cancellationToken: cancellationToken);
 

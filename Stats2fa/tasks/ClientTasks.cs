@@ -49,7 +49,7 @@ internal class ClientTasks {
                         async (client, cancellationToken) =>
                         {
                             try {
-                                await GetClientInformation(httpClient: httpClient, apiInformation: apiInformation, client: client, cancellationToken: cancellationToken);
+                                await GetClientInformation(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: cancellationToken);
                                 Interlocked.Increment(location: ref processedCount);
 
                                 // Log progress periodically
@@ -124,7 +124,7 @@ internal class ClientTasks {
                         async (client, cancellationToken) =>
                         {
                             try {
-                                await GetClientInformation(httpClient: httpClient, apiInformation: apiInformation, client: client, cancellationToken: cancellationToken);
+                                await GetClientInformation(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: cancellationToken);
                                 Interlocked.Increment(location: ref processedCount);
 
                                 var current = Interlocked.CompareExchange(location1: ref processedCount, 0, 0);
@@ -164,7 +164,7 @@ internal class ClientTasks {
         }
     }
 
-    private static async ValueTask GetClientInformation(HttpClient httpClient, ApiInformation apiInformation, ClientInformation client, CancellationToken cancellationToken) {
+    private static async ValueTask GetClientInformation(HttpClient httpClient, ApiInformation apiInformation, ClientInformation clientInformation, CancellationToken cancellationToken) {
         try {
             // Create a new linked cancellation token source that combines our token with a timeout
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token: cancellationToken);
@@ -172,22 +172,22 @@ internal class ClientTasks {
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
 
             var tasks = new List<Task> {
-                GetClientInformationAndSettings(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: timeoutCts.Token),
+                GetClientInformationAndSettings(httpClient: httpClient, apiInformation: apiInformation, clientInformation: clientInformation, cancellationToken: timeoutCts.Token),
                 // GetClientUsers(httpClient: httpClient, apiInformation: apiInformation, clientInformation: client, cancellationToken: timeoutCts.Token)
             };
 
             await Task.WhenAll(tasks: tasks);
-            client.CreatedTimestamp = DateTime.UtcNow;
+            clientInformation.CreatedTimestamp = DateTime.UtcNow;
         }
         catch (OperationCanceledException) {
             // Handle cancellation gracefully
-            StatsLogger.Log(stats: apiInformation, "Operation for client was cancelled", client: client.ClientId);
-            client.ClientStatsStatus = "ERROR_TIMEOUT";
+            StatsLogger.Log(stats: apiInformation, "Operation for client was cancelled", client: clientInformation.ClientId);
+            clientInformation.ClientStatsStatus = "ERROR_TIMEOUT";
             throw;
         }
         catch (Exception ex) {
-            StatsLogger.Log(stats: apiInformation, $"Error in GetClientInformation for client: {ex.Message}", client: client.ClientId);
-            client.ClientStatsStatus = "ERROR_EXCEPTION";
+            StatsLogger.Log(stats: apiInformation, $"Error in GetClientInformation for client: {ex.Message}", client: clientInformation.ClientId);
+            clientInformation.ClientStatsStatus = "ERROR_EXCEPTION";
             throw;
         }
     }
